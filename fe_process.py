@@ -351,7 +351,7 @@ def factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], p
         sf_df = _sf_df
     return sf_df
     
-def get_factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], program='Computer Science'):
+def get_students_features(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], program='Computer Science'):
     return factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], program=program)
         
 """   
@@ -389,4 +389,8 @@ def mt_students_features_calc(ha_df, core_courses, conval_dict, factors_dict, po
 """
 def semesters_features_calc(ha_df, core_courses, conval_dict, population_IDs=[]):
     sample_df = get_standard_ah( core_courses, conval_dict, population_IDs )
+    abs_df = get_courses_features( sample_df, population_IDs )
+    
+    semesters = []
+    
     return

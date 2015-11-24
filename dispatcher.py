@@ -1,17 +1,34 @@
 from fe_process import *
+from json import dumps
 
-
-def get_structures(program='Computer Science'):
-    _PROGRAM = data_structure_from_file('./data/_cs_program.txt')
-    _COURSES = data_structure_from_file('./data/_cs_courses.txt')
-    _CONVALD = data_structure_from_file('./data/_conval_dict.txt')
-    _FACTORS = data_structure_from_file('./data/_cs_factors.txt')
-    _STUDENTS = population_IDs_by_program( data_loader.co_df, cs_program )
+def get_structures( programs_path='./data/_cs_program.txt',
+                    core_courses_path='./data/_cs_courses.txt',
+                    conval_dict_path='./data/_conval_dict.txt',
+                    factors_dict_path='./data/_cs_factors.txt',
+                    program='Computer Science' ):
+    _PROGRAM = data_structure_from_file(programs_path)
+    _COURSES = data_structure_from_file(core_courses_path)
+    _CONVALD = data_structure_from_file(conval_dict_path)
+    _FACTORS = data_structure_from_file(factors_dict_path)
+    _STUDENTS = population_IDs_by_program( data_loader.co_df, _PROGRAM )
     
     structures_d = {'_programs':_PROGRAM,
                     'core_courses':_COURSES,
                     'conval_dict':_CONVALD,
                     'factors_dict':_FACTORS,
-                    'population_IDs':_STUDENTS}
+                    'population_IDs':_STUDENTS}    
+    return structures_d
     
-    return structurs_d
+class WSDispatcher():
+
+    _structures = None
+        
+    @property
+    def structures(self):
+        if not self._structures:
+            self._structures = get_structures()
+        return self._structures
+    
+    @property
+    def students(self):
+        return json.dumps( list( self.structures['population_IDs'] ) )

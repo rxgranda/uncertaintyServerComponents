@@ -27,16 +27,16 @@ from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from json import loads as json_loads
 from pprint import pprint
-from fe_process import *
+from dispatcher import *
 
 DEBUG = True
 PORT = 9000
 URL = "ws://8.8.8.8:9000"
 
-class MyServerProtocol(WebSocketServerProtocol):
+class BackendServerProtocol(WebSocketServerProtocol):
 
     def onConnect(self, request):
-        print("Client connecting: %i"%( request.peer ))
+        print("Client connecting: %s"%( request.peer ))
 
     def onOpen(self):
         print("WebSocket connection open.")
@@ -48,14 +48,12 @@ class MyServerProtocol(WebSocketServerProtocol):
             json_string = format(payload.decode('utf8'))
             jsonObj = json_loads( json_string )
             pprint( jsonObj )
-
-
         # echo back message verbatim
-        self.sendMessage( payload, isBinary )
+        #self.sendMessage( payload, isBinary )
+        self.sendMessage( WSDispatcher().students, False )
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: %s"%( reason ))
-
 
 if __name__ == '__main__':
 
@@ -67,7 +65,7 @@ if __name__ == '__main__':
     log.startLogging(sys.stdout)
 
     factory = WebSocketServerFactory(URL, debug=DEBUG)
-    factory.protocol = MyServerProtocol
+    factory.protocol = BackendServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
     reactor.listenTCP( PORT, factory )
