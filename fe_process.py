@@ -7,6 +7,7 @@ import rpy2.robjects as robjects
 from threading import Thread
 from Queue import Queue
 from pandas import DataFrame
+from pandas import Series
 from numpy import int32, float32
 from rpy2.robjects import FloatVector
 from rpy2.robjects.packages import importr
@@ -59,7 +60,7 @@ def GPA_calc(ha_df):
     
     def GPA_record(academic_history):
         try:
-            cod_estudiante = int32( academic_history['cod_estudiante'].first() )
+            cod_estudiante = int32( academic_history['cod_estudiante'].values[0] )
         except: 
             cod_estudiante = 0
         _GPA = academic_history['promedio'].values.mean()
@@ -278,7 +279,7 @@ def courses_features_calc(ha_df, population_IDs=[]):
         return _count
         
     def course_features_record(academic_history):
-        cod_materia_acad = academic_history['cod_materia_acad'].first()
+        cod_materia_acad = academic_history['cod_materia_acad'].values[0]
         try:
             cod_materia_acad = cod_materia_acad[:cod_materia_acad.index(' ')]
         except: 
@@ -296,17 +297,24 @@ def courses_features_calc(ha_df, population_IDs=[]):
     abs_df = DataFrame.from_records( abs_df.tolist() )
     return abs_df
 
-def alpha_beta_skewness(ha_df, population_IDs=[], program='Computer Science'):
-    try:
-        if abs_df.empty:
-            _abs_df = pd.read_csv('./data/abs_df_%i.csv'%( hash( program ) ), index_col=0)
-            abs_df = _abs_df
-        else:
-            return abs_df
-    except:
+def alpha_beta_skewness(ha_df, population_IDs=[], program='Computer Science', overwrite=False):
+    global abs_df
+    
+    def calc_n_save():        
         _abs_df = courses_features_calc( ha_df, population_IDs )
         _abs_df.to_csv('./data/abs_df_%i.csv'%( hash( program ) ))
-    return _abs_df
+        return _abs_df
+
+    if abs_df.empty:
+        try:
+            _abs_df = pd.read_csv('./data/abs_df_%i.csv'%( hash( program ) ), index_col=0)
+            abs_df = _abs_df
+        except:
+            abs_df = calc_n_save()
+    elif overwrite:
+        abs_df = calc_n_save()
+    return abs_df
+        
 
 def get_courses_features(ha_df, population_IDs=[]):
     return alpha_beta_skewness( ha_df, population_IDs )
@@ -317,7 +325,7 @@ def students_features_calc(ha_df, core_courses, conval_dict, factors_dict, popul
     
     def get_factors(student_ah):
         try:
-            cod_estudiante = int32( student_ah['cod_estudiante'].first() )
+            cod_estudiante = int32( student_ah['cod_estudiante'].values[0] )
         except:
             cod_estudiante = 0
         f_r = {'cod_estudiante':cod_estudiante}
@@ -330,7 +338,7 @@ def students_features_calc(ha_df, core_courses, conval_dict, factors_dict, popul
         return f_r
         
     ha_gb = sample_df.groupby('cod_estudiante')
-    sf_df = ha_gb.apply( get_factors )    
+    sf_df = ha_gb.apply( get_factors )
     sf_df = DataFrame.from_records( sf_df.tolist() )
     return sf_df
 
@@ -390,7 +398,26 @@ def mt_students_features_calc(ha_df, core_courses, conval_dict, factors_dict, po
 def semesters_features_calc(ha_df, core_courses, conval_dict, population_IDs=[]):
     sample_df = get_standard_ah( core_courses, conval_dict, population_IDs )
     abs_df = get_courses_features( sample_df, population_IDs )
+    ha_gb = sample_df.groupby(['cod_estudiante','anio','termino'])
+    sample_df['semestre'] = ha_gb.cumcount()
+    #sample_df['semestre'] = ha_gb.apply( lambda x: Series( range( len(x) ), x.index) )
     
-    semesters = []
+    def get_semester_record(chunk):
+        taken_courses = chunk['cod_materia_acad'].values
+        tmp = { 'cod_estudiante': chunk['cod_estudiante'].values[0],
+                'anio': chunk['anio'].values[0],
+                'termino': chunk['termino'].values[0],
+                'semestre': chunk['semestre'].values[0],
+                'materias_tomadas': ' '.join( taken_courses ),
+                'materias_reprobadas': ' '.join( chunk[ rp_classes_mask(chunk) ]['cod_materia_acad'].values ),
+                'alpha_total': abs_df[ abs_df['cod_materia_acad'].isin(taken_courses) ]['alpha'].sum(),
+                'beta_total': abs_df[ abs_df['cod_materia_acad'].isin(taken_courses) ]['beta'].sum(),
+                'skewness_total': abs_df[ abs_df['cod_materia_acad'].isin(taken_courses) ]['skewness'].sum(),
+                'n_materias': len( abs_df[ abs_df['cod_materia_acad'].isin(taken_courses) ] ),
+                }
+        return tmp
+    ha_gb = sample_df.groupby(['cod_estudiante','anio','termino'])
+    se_df = ha_gb.apply( get_semester_record )
+    se_df = DataFrame.from_records( se_df.tolist() )
+    return se_df
     
-    return
