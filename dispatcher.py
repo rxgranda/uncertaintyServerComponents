@@ -1,5 +1,6 @@
 from fe_process import *
 from json import dumps
+from numpy.random import uniform
 
 def get_structures( programs_path='./data/_cs_program.txt',
                     core_courses_path='./data/_cs_courses.txt',
@@ -11,12 +12,18 @@ def get_structures( programs_path='./data/_cs_program.txt',
     _CONVALD = data_structure_from_file(conval_dict_path)
     _FACTORS = data_structure_from_file(factors_dict_path)
     _STUDENTS = population_IDs_by_program( data_loader.co_df, _PROGRAM )
+    _RISK = []
+    #def risk():
+    for student in _STUDENTS:
+            risk = {'student_ID':student,'risk':uniform()}
+            _RISK.append(risk)
     
     structures_d = {'_programs':_PROGRAM,
                     'core_courses':_COURSES,
                     'conval_dict':_CONVALD,
                     'factors_dict':_FACTORS,
-                    'population_IDs':_STUDENTS}    
+                    'population_IDs':_STUDENTS,
+                    'risk':_RISK}    
     return structures_d
     
 class WSDispatcher():
@@ -32,3 +39,7 @@ class WSDispatcher():
     @property
     def students(self):
         return json.dumps( list( self.structures['population_IDs'] ) )
+        
+    @property
+    def risk(self):
+        return json.dumps( self.structures['risk'] )

@@ -50,7 +50,7 @@ class BackendServerProtocol(WebSocketServerProtocol):
             pprint( jsonObj )
         # echo back message verbatim
         #self.sendMessage( payload, isBinary )
-        self.sendMessage( WSDispatcher().students, False )
+        self.sendMessage( WSDispatcher().risk, False )
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: %s"%( reason ))
