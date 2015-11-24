@@ -1,0 +1,5 @@
+[
+{"cod_carrera":"ICC"},
+{"cod_carrera":"CMP"},
+{"cod_carrera":"ELE", "cod_especializ":"CO"}
+]

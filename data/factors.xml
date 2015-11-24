@@ -1,0 +1,45 @@
+<factor1 type="list">
+<item type="str">ICQ00018</item>
+<item type="str">ICM00216</item>
+<item type="str">ICF00687</item>
+<item type="str">FIEC04341</item>
+<item type="str">FIEC06411</item>
+<item type="str">ICM00604</item>
+<!-- <item type="str">ICM01958</item>-->
+<item type="str">FIEC04622</item>
+<item type="str">ICM01974</item>
+<item type="str">ICM01966</item>
+<item type="str">FIEC03012</item>
+<item type="str">ICM00901</item>
+<item type="str">ICHE00885</item>
+<item type="str">FIEC04366</item>
+<item type="str">ICM00166</item>
+<item type="str">FIEC00299</item>
+</factor1>
+<factor2 type="list">
+<item type="str">FIEC04622</item>
+<item type="str">FIEC00299</item>
+<item type="str">FIEC05553</item>
+<item type="str">FIEC03319</item>
+<item type="str">FIEC03046</item>
+<item type="str">ICHE02675</item>
+<item type="str">FIEC02097</item>
+<item type="str">FIEC01545</item>
+<item type="str">FIEC03459</item>
+</factor2>
+<factor3 type="list">
+<item type="str">ICQ00018</item>
+<item type="str">ICHE00877</item>
+<item type="str">FIEC03046</item>
+<item type="str">FIEC03053</item>
+</factor3>
+<factor5 type="list">
+<item type="str">ICM01974</item>
+<item type="str">FIEC01735</item>
+</factor5>
+<factor4 type='list'>
+<item tyepe="str">FIEC04622</item>
+<item tyepe="str">FIEC03012</item>
+<item tyepe="str">FIEC01552</item>
+</factor4>
+</root>
