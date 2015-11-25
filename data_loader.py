@@ -22,10 +22,10 @@ try:
     ha_df['promedio'] = ha_df['promedio'].values.astype(float32)
     ha_df['anio'] = ha_df['anio'].values.astype(int32)
     ha_df['paralelo'] = ha_df['paralelo'].values.astype(int32)
-    ha_df['GPA'] = ha_df['promedio'].values.astype(float32)
-    ha_df['ap_GPA'] = ha_df['promedio'].values.astype(float32)
-    ha_df['performance'] = ha_df['promedio'].values.astype(float32)
-    ha_df['promedio_GPA'] = ha_df['promedio'].values.astype(float32)
+    ha_df['GPA'] = ha_df['GPA'].values.astype(float32)
+    ha_df['ap_GPA'] = ha_df['ap_GPA'].values.astype(float32)
+    ha_df['performance'] = ha_df['performance'].values.astype(float32)
+    ha_df['promedio_GPA'] = ha_df['promedio_GPA'].values.astype(float32)
 except:
     pass
 end = time.time()
