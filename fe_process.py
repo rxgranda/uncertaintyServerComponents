@@ -7,7 +7,6 @@ import rpy2.robjects as robjects
 from threading import Thread
 from Queue import Queue
 from pandas import DataFrame
-from pandas import Series
 from numpy import int32, float32
 from rpy2.robjects import FloatVector
 from rpy2.robjects.packages import importr
@@ -326,15 +325,15 @@ def students_features_calc(ha_df, core_courses, conval_dict, factors_dict, popul
     ap_mask = get_ap_mask()
     
     def get_factors(student_ah):
-        try:
-            cod_estudiante = int32( student_ah['cod_estudiante'].values[0] )
-        except:
-            cod_estudiante = 0
+        #try:
+        cod_estudiante = int32( student_ah['cod_estudiante'].values[0] )
+        #except:
+        #    cod_estudiante = 0
         f_r = {'cod_estudiante':cod_estudiante}
         student_ah_isin = student_ah['cod_materia_acad'].isin
-        student_ah_promedio = student_ah[ set_mask ]['promedio'].values
         for factor, courses_set in factors_dict.iteritems():
-            set_mask =  student_ah_isin( courses_set ) 
+            set_mask =  student_ah_isin( courses_set )
+            student_ah_promedio = student_ah[ set_mask ]['promedio'].values
             f_r[factor] = student_ah_promedio.mean()
             f_r['%s_performance'%factor] = len( student_ah[ ap_mask(student_ah) & set_mask ] ) * 1.0 /\
                                            len( student_ah )
