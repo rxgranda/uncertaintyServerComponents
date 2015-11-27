@@ -3,9 +3,12 @@ import skfuzzy as skf
 import pandas as pd
 from pandas import DataFrame
 from fe_process import *
+from sklearn.preprocessing import normalize
 from sklearn.cluster import KMeans as kmeans
 from skfuzzy import cmeans
+import warnings
 
+warnings.simplefilter("ignore")
 pd.options.mode.use_inf_as_null = True
 
 class AcademicClusterer():
@@ -128,8 +131,12 @@ class AcademicClusterer():
         def rate_record(chunk):
             tmp = { 'km_cluster_ID': chunk['km_cluster_ID'].values[0],
                     'fcm_cluster_ID': chunk['fcm_cluster_ID'].values[0],
-                    'ratio': len( chunk[ chunk['ha_reprobado'] ] ) * 1.0 / len( chunk ) }
+                    'ratio': len( chunk[ chunk['ha_reprobado'] ] ) * 1.0 / len( chunk ),
+                    'tamanio': len( chunk ) }
             return tmp
         
         r_gb = r_df.groupby(['km_cluster_ID','fcm_cluster_ID'])
-        return DataFrame.from_records( list( r_gb.apply( rate_record ) ) )
+        df = DataFrame.from_records( list( r_gb.apply( rate_record ) ) )
+        #df['tamanio_relativo'] = df['tamanio'].values
+        df['tamanio_relativo'] = normalize( df['tamanio'].values.reshape(1, -1) )[0]
+        return df

@@ -45,13 +45,20 @@ class AcademicFailureEstimator():
     def predict(self, student_ID, semester):
         semester_features, student_features = self.get_features( student_ID, semester )
         semester_type = self.semesters_classifier_fn(semester_features)
-        student_membership = self.students_classifier_fn(student_features)
+        #U_, U0_, d_, Jm_, p_, fpc_
+        U_, _, _, _, _, fpc_ = self.students_classifier_fn(student_features)
+        student_membership = U_.T[0]
         
         rates = self._academic_clusterer.rates()
         
-        possibilities = rates[ ( rates['km_cluster_ID'] == semester_type ) ]['ratio'].values
+        set_mask = ( rates['km_cluster_ID'] == semester_type[0] )        
+        possibilities = rates[ set_mask ]['ratio'].values
+        relative_sample_size = rates[ set_mask ]['tamanio_relativo'].values
         
-        return np_average(possibilities, weights=student_membership)
+        risk = np_average(possibilities, weights=student_membership, axis=0)
+        quality = np_average(relative_sample_size, weights=student_membership, axis=0)        
+        
+        return risk, quality
         
         
     def get_features(self, student_ID, semester):

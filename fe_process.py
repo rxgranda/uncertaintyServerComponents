@@ -2,10 +2,8 @@
 import data_loader
 import pandas as pd
 import numpy as np
-import json
 import rpy2.robjects as robjects
-from threading import Thread
-from Queue import Queue
+from json import load as json_load
 from pandas import DataFrame
 from numpy import int32, float32
 from rpy2.robjects import FloatVector
@@ -34,7 +32,7 @@ _aberrant_value_code = -1000000
 def data_structure_from_file(filepath):
     _var = None
     with open(filepath) as infile:
-        _var = json.load( infile )
+        _var = json_load( infile )
     return _var
 
 def get_ap_mask(cut=6.0):
