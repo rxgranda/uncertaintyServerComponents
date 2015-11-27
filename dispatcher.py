@@ -1,5 +1,5 @@
 from fe_process import *
-from json import dumps
+from json import dumps as json_dumps
 from numpy.random import uniform
 from clusterer import AcademicClusterer
 from classifier_estimator import AcademicFailureEstimator
@@ -16,7 +16,7 @@ def get_structures( programs_path='./data/_cs_program.txt',
     _STUDENTS = population_IDs_by_program( data_loader.co_df, _PROGRAM )
     #_RISK = []
     #def risk():
-    #for student in _STUDENTS:
+    #    for student in _STUDENTS:
     #        risk = {'student_ID':student,'risk':uniform()}
     #        _RISK.append(risk)
     
@@ -41,7 +41,7 @@ class WSDispatcher():
                                                      self._structures['factors_dict'], 
                                                      self._structures['_programs'] )
         
-        self.academic_estimator = AcademicFailureEstimator(academic_clusterer)
+        self.academic_estimator = AcademicFailureEstimator(self.academic_clusterer)
         self.academic_estimator.init_semesters_classifier_fn()
         self.academic_estimator.init_students_classifier_fn()
         
@@ -51,16 +51,19 @@ class WSDispatcher():
     
     @property
     def students(self):
-        return json.dumps( list( self.structures['population_IDs'] ) )
-        
-    #@property
-    #def risk(self):
-    #    return json.dumps( self.structures['risk'] )
+        return json_dumps( list( self.structures['population_IDs'] ) )
     
+    """    
+    @property
+    def risk(self):
+        return json_dumps( self.structures['risk'] )
+    """
     def risk(self, json_input):
-        _root = json_input[0]
+        #print json_input
+        _root = json_input
         semester = [course['id']  for course in _root['courses']]
-        student_ID = _root['student'][0]['id']
-        risk, quality = academic_estimator.predict(student_ID=student_ID, semester=semester)
-        return dumps( {'risk':risk,'quality':quality} )
+        student_ID = int( _root['student'][0]['id'] )
+        risk, quality = self.academic_estimator.predict(student_ID=student_ID, semester=semester)
+        #risk, quality = 0.1, 0.3
+        return json_dumps( {'risk':risk,'quality':quality} )
         

@@ -45,12 +45,12 @@ class BackendServerProtocol(WebSocketServerProtocol):
         if isBinary:
             print("Binary message received: %d bytes"%( len( payload ) ))
         else:
-            json_string = payload(format.decode('utf8'))
+            json_string = format(payload.decode('utf8'))
             json_input = json_loads( json_string )
             pprint( json_input )
         # echo back message verbatim
         #self.sendMessage( payload, isBinary )
-        self.sendMessage( WSDispatcher().risk(json_input), False )
+        self.sendMessage( WSDispatcher().risk( json_input ), False )
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: %s"%( reason ))
