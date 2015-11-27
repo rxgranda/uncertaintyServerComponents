@@ -34,6 +34,7 @@ PORT = 9000
 URL = "ws://8.8.8.8:9000"
 
 class BackendServerProtocol(WebSocketServerProtocol):
+    dispatcher = WSDispatcher()
 
     def onConnect(self, request):
         print("Client connecting: %s"%( request.peer ))
@@ -50,7 +51,7 @@ class BackendServerProtocol(WebSocketServerProtocol):
             pprint( json_input )
         # echo back message verbatim
         #self.sendMessage( payload, isBinary )
-        self.sendMessage( WSDispatcher().risk( json_input ), False )
+        self.sendMessage( self.dispatcher.risk( json_input ), False )
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: %s"%( reason ))
