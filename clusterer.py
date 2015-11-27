@@ -111,7 +111,7 @@ class AcademicClusterer():
         se_df = self.semesters_features
         se_df.fillna(0)
         #se_df = se_df.drop_duplicates( subset=['materias_tomadas'].extend( AcademicClusterer.SEMESTERS_F_LABELS ) )
-        data = se_df[ AcademicClusterer.SEMESTERS_F_LABELS ].as_matrix()
+        data = se_df[ AcademicClusterer.SEMESTERS_F_LABELS ].fillna(0).as_matrix()
         if kwargs == {}:
             C = 3
             km = kmeans(init='k-means++', n_clusters=C, n_init=10)
