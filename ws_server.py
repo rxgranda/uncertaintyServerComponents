@@ -1,7 +1,9 @@
 #!/usr/bin/python
+
+###############################################################################
 # MIT License (MIT)
 #
-# Copyright (c) Tavendo GmbH
+# Copyright (c)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +32,8 @@ from pprint import pprint
 from dispatcher import *
 
 DEBUG = True
-PORT = 9000
-URL = "ws://8.8.8.8:9000"
+PORT = 80
+URL = "ws://8.8.8.8:80"
 
 class BackendServerProtocol(WebSocketServerProtocol):
     dispatcher = WSDispatcher()
@@ -48,9 +50,9 @@ class BackendServerProtocol(WebSocketServerProtocol):
         else:
             json_string = format(payload.decode('utf8'))
             json_input = json_loads( json_string )
-            pprint( json_input )
+            #pprint( json_input )
+
         # echo back message verbatim
-        #self.sendMessage( payload, isBinary )
         self.sendMessage( self.dispatcher.risk( json_input ), False )
 
     def onClose(self, wasClean, code, reason):

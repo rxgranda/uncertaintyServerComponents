@@ -1,10 +1,36 @@
 #-*- coding: utf-8 -*-
+
+###############################################################################
+# MIT License (MIT)
+#
+# Copyright (c)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+###############################################################################
 import data_loader
-import pandas as pd
 import numpy as np
+import pandas as pd
 import rpy2.robjects as robjects
 from json import load as json_load
 from pandas import DataFrame
+from pandas import read_csv as pd_read_csv
 from numpy import int32, float32
 from rpy2.robjects import FloatVector
 from rpy2.robjects.packages import importr
@@ -84,7 +110,7 @@ def get_GPA_by_student(ha_df=data_loader.ha_df):
     try:
         if gpa_df.empty:
             #print 'GPA load'
-            _gpa_df = pd.read_csv('./data/gpa_df.csv',
+            _gpa_df = pd_read_csv('./data/gpa_df.csv',
             index_col=0,
             dtype={'GPA':float32,
             'ap_GPA':float32,
@@ -103,7 +129,7 @@ def ah_GPA(ha_df, gpa_df):
     if 'promedio_GPA' in list( ha_df ):
         _gpaha_df = ha_df
     else:
-        _gpaha_df = pd.merge(ha_df, gpa_df, on='cod_estudiante', how='left')
+        _gpaha_df = pd_merge(ha_df, gpa_df, on='cod_estudiante', how='left')
         #print ha_df[:2]
         #print gpa_df[:2]
         _gpaha_df['promedio_GPA'] = _gpaha_df['promedio'] - _gpaha_df['GPA']
@@ -216,7 +242,7 @@ def ah_standardization(ha_df, core_courses, conval_dict, population_IDs=[], mask
 def get_standard_ah(core_courses, conval_dict, population_IDs=[], start_year=1959, end_year=2013, program='Computer Science'):
     _h_program = hash( program )
     try:
-        sha_df = pd.read_csv( './data/sha_df_%i_%i_%i.csv'%( _h_program, start_year, end_year ))
+        sha_df = pd_read_csv( './data/sha_df_%i_%i_%i.csv'%( _h_program, start_year, end_year ))
     except:
         sample_df = get_ahoi( get_ah(start_year=start_year, end_year=end_year),
                               population_IDs=population_IDs )
@@ -306,7 +332,7 @@ def alpha_beta_skewness(ha_df, population_IDs=[], program='Computer Science', ov
 
     if abs_df.empty:
         try:
-            _abs_df = pd.read_csv('./data/abs_df_%i.csv'%( _h_program ), index_col=0)
+            _abs_df = pd_read_csv('./data/abs_df_%i.csv'%( _h_program ), index_col=0)
             abs_df = _abs_df
         except:
             abs_df = calc_n_save()
@@ -349,7 +375,7 @@ def factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], p
     _h_program = hash( program )
     try:
         if sf_df.empty:
-            _sf_df = pd.read_csv( './data/sf_df_%i.csv'%( _h_program ))
+            _sf_df = pd_read_csv( './data/sf_df_%i.csv'%( _h_program ))
             sf_df = _sf_df
             return sf_df
     except:
@@ -413,7 +439,7 @@ def semesters(ha_df, core_courses, conval_dict, population_IDs=[], program='Comp
     _h_program = hash( program )
     try:
         if se_df.empty:
-            _se_df = pd.read_csv( './data/se_df_%i.csv'%( _h_program ))
+            _se_df = pd_read_csv( './data/se_df_%i.csv'%( _h_program ))
             se_df = _se_df
             return se_df
     except:

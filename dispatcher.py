@@ -1,6 +1,30 @@
+###############################################################################
+# MIT License (MIT)
+#
+# Copyright (c)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+###############################################################################
+
 from fe_process import *
 from json import dumps as json_dumps
-from numpy.random import uniform
 from clusterer import AcademicClusterer
 from classifier_estimator import AcademicFailureEstimator
 
@@ -14,18 +38,12 @@ def get_structures( programs_path='./data/_cs_program.txt',
     _CONVALD = data_structure_from_file(conval_dict_path)
     _FACTORS = data_structure_from_file(factors_dict_path)
     _STUDENTS = population_IDs_by_program( data_loader.co_df, _PROGRAM )
-    #_RISK = []
-    #def risk():
-    #    for student in _STUDENTS:
-    #        risk = {'student_ID':student,'risk':uniform()}
-    #        _RISK.append(risk)
     
     structures_d = {'_programs':_PROGRAM,
                     'core_courses':_COURSES,
                     'conval_dict':_CONVALD,
                     'factors_dict':_FACTORS,
                     'population_IDs':_STUDENTS,
-                    #'risk':_RISK
                     }    
     return structures_d
     
@@ -33,6 +51,8 @@ class WSDispatcher():
 
     _structures = None
     
+    """
+    """
     def __init__(self):
         self._structures = get_structures()
         
@@ -49,21 +69,21 @@ class WSDispatcher():
     def structures(self):
         return self._structures
     
+    """
+    """
     @property
     def students(self):
         return json_dumps( list( self.structures['population_IDs'] ) )
     
-    """    
-    @property
-    def risk(self):
-        return json_dumps( self.structures['risk'] )
+    """
     """
     def risk(self, json_input):
-        #print json_input
-        _root = json_input
-        semester = [course['id']  for course in _root['courses']]
-        student_ID = int( _root['student'][0]['id'] )
-        risk, quality = self.academic_estimator.predict(student_ID=student_ID, semester=semester)
-        #risk, quality = 0.1, 0.3
+        try:
+            _root = json_input
+            semester = [course['id']  for course in _root['courses']]
+            student_ID = int( _root['student'][0]['id'] )
+            risk, quality = self.academic_estimator.predict(student_ID=student_ID, semester=semester)
+        except:
+            risk, quality = (0,0)
         return json_dumps( {'risk':risk,'quality':quality} )
         
