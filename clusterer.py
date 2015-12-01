@@ -3,7 +3,7 @@ import skfuzzy as skf
 import pandas as pd
 from pandas import DataFrame
 from fe_process import *
-from sklearn.preprocessing import normalize
+#from sklearn.preprocessing import scale
 from sklearn.cluster import KMeans as kmeans
 from skfuzzy import cmeans
 import warnings
@@ -138,5 +138,9 @@ class AcademicClusterer():
         r_gb = r_df.groupby(['km_cluster_ID','fcm_cluster_ID'])
         df = DataFrame.from_records( list( r_gb.apply( rate_record ) ) )
         #df['tamanio_relativo'] = df['tamanio'].values
-        df['tamanio_relativo'] = normalize( df['tamanio'].values.reshape(1, -1) )[0]
+        #df['tamanio_relativo'] = scale( df['tamanio'].values )
+        df_tamanio_val = df['tamanio'].values
+        tamanio_min = df_tamanio_val.min()
+        tamanio_max = df_tamanio_val.max()
+        df['tamanio_relativo'] = (df_tamanio_val - tamanio_min) * 1.0 / ( tamanio_max - tamanio_min )
         return df

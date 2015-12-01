@@ -2,6 +2,7 @@ import pandas as pd
 from pandas import DataFrame
 from skfuzzy import cmeans_predict
 from sklearn.svm import SVC
+from numpy import array as np_array
 from numpy import average as np_average
 from numpy import max as np_max
 
@@ -79,8 +80,10 @@ class AcademicFailureEstimator():
         
         cs_df = self._academic_clusterer.students_features
         cs_df = cs_df[ cs_df['cod_estudiante'] == student_ID ]
-        
-        student_features = cs_df[ self._academic_clusterer.STUDENTS_F_LABELS ].values
+        if cs_df.empty:
+            student_features = np_array( [[ 0.,  0.,  0.,  0.,  0.]] )
+        else:        
+            student_features = cs_df[ self._academic_clusterer.STUDENTS_F_LABELS ].values
                 
         return semester_features, student_features
         

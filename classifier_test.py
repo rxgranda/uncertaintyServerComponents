@@ -11,3 +11,4 @@ academic_estimator.init_students_classifier_fn()
 
 academic_estimator.predict(student_ID=200909893, semester=['ICM00216','ICF01099','ICHE00877','FIEC06460'])
 academic_estimator.predict(student_ID=200920254, semester=['ICF01099','ICHE00877','FIEC06460'])
+#200834711
