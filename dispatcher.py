@@ -60,7 +60,7 @@ class WSDispatcher():
                                                      self._structures['conval_dict'],
                                                      self._structures['factors_dict'], 
                                                      self._structures['_programs'] )
-        self._start_year = 1959 
+        self._start_year = 1999 
         self._end_year = 2013
         
         self.init_estimator()
@@ -88,8 +88,8 @@ class WSDispatcher():
             semester = [course['id']  for course in _root['courses']]
             student_ID = int( _root['student'][0]['id'] )
             
-            start_year = int( _root['data'][0]['from'] )
-            end_year = int( _root['data'][0]['to'] )
+            start_year = _root['data'][0]['from']
+            end_year = _root['data'][0]['to']
             if self._start_year != start_year or self._end_year != end_year:
                 self._start_year = start_year
                 self._end_year = end_year
