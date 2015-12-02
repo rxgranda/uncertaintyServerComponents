@@ -67,8 +67,7 @@ class AcademicClusterer():
     
     """
     """
-    @ha_df.setter
-    def ha_df(self, start_year=1959, end_year=2013):
+    def set_ha_df(self, start_year=1959, end_year=2013):
         self._ha_df = get_ah(start_year, end_year)
 
     """
@@ -183,9 +182,7 @@ class AcademicClusterer():
                              self.students_features,
                              on='cod_estudiante',
                              how='left' )
-        
-        
-            r_gb = r_df.groupby(['km_cluster_ID','fcm_cluster_ID'])
+            r_gb = r_df.groupby( ['km_cluster_ID','fcm_cluster_ID'] )
             df = DataFrame.from_records( list( r_gb.apply( rate_record ) ) )
             df_tamanio_val = df['tamanio'].values
             tamanio_min = df_tamanio_val.min()

@@ -76,6 +76,17 @@ class AcademicFailureEstimator():
         self._semesters_clf = clf       
     
     """
+    Use of the certainty value given by Ceratainty=1-Uncertainty
+    
+    The forecasts are probabilistic, the observations are binary.
+    Sample baseline calculated from observations.      
+
+    Brier Score (BS)           =   0.24
+    Brier Score - Baseline     =  0.2488
+    Skill Score                =  0.03551
+    Reliability                =  0.01094
+    Resolution                 =  0.01978                       
+    Uncertainty              =  0.2488
     """
     def predict(self, student_ID, semester):
         semester_features, student_features = self.get_features( student_ID, semester )
@@ -89,7 +100,8 @@ class AcademicFailureEstimator():
         relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
         
         risk = np_average(possibilities, weights=student_membership, axis=0)
-        quality = np_average(relative_sample_size, weights=student_membership, axis=0)        
+        certainty = 1 - 0.2488
+        quality = np_average(relative_sample_size, weights=student_membership, axis=0)*certainty
         
         return risk, quality
         
