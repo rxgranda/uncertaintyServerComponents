@@ -102,6 +102,7 @@ class AcademicFailureEstimator():
         risk = np_average(possibilities, weights=student_membership, axis=0)
         certainty = 1. - 0.2488
         quality = np_average(relative_sample_size, weights=student_membership, axis=0) + certainty
+        print certainty, quality
         if quality > 1:
             quality = 1.
         
