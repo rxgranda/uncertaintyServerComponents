@@ -60,7 +60,12 @@ class WSDispatcher():
                                                      self._structures['conval_dict'],
                                                      self._structures['factors_dict'], 
                                                      self._structures['_programs'] )
+        self._start_year = 1959 
+        self._end_year = 2013
         
+        self.init_estimator()
+        
+    def init_estimator(self):
         self.academic_estimator = AcademicFailureEstimator(self.academic_clusterer)
         self.academic_estimator.init_semesters_classifier_fn()
         self.academic_estimator.init_students_classifier_fn()
@@ -82,8 +87,22 @@ class WSDispatcher():
             _root = json_input
             semester = [course['id']  for course in _root['courses']]
             student_ID = int( _root['student'][0]['id'] )
-            risk, quality = self.academic_estimator.predict(student_ID=student_ID, semester=semester)
+            
+            start_year = int( _root['data'][0]['from'] )
+            end_year = int( _root['data'][0]['to'] )
+            if self._start_year != start_year or self._end_year != end_year:
+                self._start_year = start_year
+                self._end_year = end_year
+                self.academic_clusterer.set_ha_df(start_year, end_year)
+                self.init_estimator()
+                
+            
+            risk, quality = self.academic_estimator.predict( student_ID=student_ID,
+                                                             semester=semester
+                                                             )
         except:
+            import traceback
+            traceback.print_exc()
             risk, quality = (0,0)
         return json_dumps( {'risk':risk,'quality':quality} )
         
