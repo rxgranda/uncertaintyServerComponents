@@ -28,8 +28,10 @@
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from json import loads as json_loads
-from pprint import pprint
 from dispatcher import *
+from sys import stdout
+from twisted.python import log
+from twisted.internet import reactor
 
 DEBUG = True
 PORT = 80
@@ -60,16 +62,11 @@ class BackendServerProtocol(WebSocketServerProtocol):
 
 if __name__ == '__main__':
 
-    import sys
-
-    from twisted.python import log
-    from twisted.internet import reactor
-
-    log.startLogging(sys.stdout)
+    log.startLogging( stdout )
 
     factory = WebSocketServerFactory(URL, debug=DEBUG)
     factory.protocol = BackendServerProtocol
-    # factory.setProtocolOptions(maxConnections=2)
+    #factory.setProtocolOptions(maxConnections=2)
 
     reactor.listenTCP( PORT, factory )
     reactor.run()

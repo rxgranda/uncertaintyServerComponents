@@ -42,25 +42,35 @@ from scipy.spatial.distance import cdist
 
 pd.options.mode.use_inf_as_null = True
 
+"""
+"""
 e1071 = importr('e1071')
 psych = importr('psych')
 nFactors = importr('nFactors')
 stats = importr('stats')
 
+"""
+"""
 gpa_df = DataFrame()
 gpaha_df = DataFrame()
 abs_df = DataFrame()
 sf_df = DataFrame()
 se_df = DataFrame()
 
+"""
+"""
 _aberrant_value_code = -1000000
-    
+
+"""
+"""
 def data_structure_from_file(filepath):
     _var = None
     with open(filepath) as infile:
         _var = json_load( infile )
     return _var
 
+"""
+"""
 def get_ap_mask(cut=6.0):
     ap_courses_mask = lambda x: ( ( x['estado_mat_tomada']=='AP' ) \
                                   | ( x['estado_mat_tomada']=='IA' ) \
@@ -68,6 +78,8 @@ def get_ap_mask(cut=6.0):
                                 )
     return ap_courses_mask
 
+"""
+"""
 def get_rp_mask(cut=6.0):
     rp_courses_mask = lambda x: ( ( x['estado_mat_tomada']=='RP' ) \
                                   | ( x['estado_mat_tomada']=='IR' ) \
@@ -76,6 +88,8 @@ def get_rp_mask(cut=6.0):
                                 )
     return rp_courses_mask
 
+"""
+"""
 def GPA_calc(ha_df):
     ha_gb = ha_df.groupby('cod_estudiante')
     ap_mask = get_ap_mask()
@@ -94,17 +108,17 @@ def GPA_calc(ha_df):
         
         tmp = {'cod_estudiante': cod_estudiante,
                'GPA': _GPA,
-               'ap_GPA': _ap_GPA, #\
-                         #if len( academic_history[ ap_mask(academic_history) ] ) != 0 else 0.,
-               'performance': _performance #\
-                              #if len( academic_history ) > 0 else 0.,
+               'ap_GPA': _ap_GPA,
+               'performance': _performance
                }
         return tmp
     
     l_gpa_r = ha_gb.apply( GPA_record )
     gpa_df = DataFrame.from_records( l_gpa_r.tolist() )
     return gpa_df
-    
+
+"""
+"""
 def get_GPA_by_student(ha_df=data_loader.ha_df):
     global gpa_df
     try:
@@ -125,13 +139,13 @@ def get_GPA_by_student(ha_df=data_loader.ha_df):
         _gpa_df.to_csv('./data/gpa_df.csv')
     return _gpa_df
 
+"""
+"""
 def ah_GPA(ha_df, gpa_df):
     if 'promedio_GPA' in list( ha_df ):
         _gpaha_df = ha_df
     else:
         _gpaha_df = pd_merge(ha_df, gpa_df, on='cod_estudiante', how='left')
-        #print ha_df[:2]
-        #print gpa_df[:2]
         _gpaha_df['promedio_GPA'] = _gpaha_df['promedio'] - _gpaha_df['GPA']
         _gpaha_df.fillna(0.)
         _gpaha_df.to_csv('./data/ha_df.csv', dtype={'cod_estudiante':int32,
@@ -145,6 +159,8 @@ def ah_GPA(ha_df, gpa_df):
         gpaha_df = _gpaha_df
     return _gpaha_df
 
+"""
+""" 
 def get_ah(start_year=1959, end_year=2013):
     global gpaha_df
     if gpaha_df.empty:
@@ -155,17 +171,17 @@ def get_ah(start_year=1959, end_year=2013):
     else:
         sample_df = gpaha_df[ ( gpaha_df['anio'] >= start_year ) & ( gpaha_df['anio'] <= end_year ) ]
         return sample_df
-    
+
+"""
+""" 
 def population_IDs_by_program(co_df, \
                           _programs=[{'cod_carrera':'ELE',\
                                       'cod_especializ':'CO'
                                      }]):
     def get_mask(_programs):
         big_or = None
-        #s_big_or = ''
         for _program in _programs:
             big_and = None
-            #s_big_and = ''
             for _field, _value in _program.iteritems():
                 if big_and is None:
                     big_and = ( co_df[_field] == _value )
@@ -179,6 +195,8 @@ def population_IDs_by_program(co_df, \
     
     return np.unique( co_df[ get_mask(_programs) ]['cod_estudiante'].values )
 
+"""
+""" 
 def get_ahoi(ha_df, core_courses=[], population_IDs=[], mask=None):
     if not mask is None:
         ha_df = ha_df[ mask ]
@@ -187,12 +205,13 @@ def get_ahoi(ha_df, core_courses=[], population_IDs=[], mask=None):
     if population_IDs != []:
         ha_df = ha_df[ ha_df['cod_estudiante'].isin( population_IDs ) ]
     return ha_df
-    
+
+"""
+""" 
 def ah_standardization(ha_df, core_courses, conval_dict, population_IDs=[], mask=None):
     sample_df = get_ahoi( ha_df, population_IDs=population_IDs, mask=mask )
     
     ncc_df = ah_no_core_courses(sample_df, population_IDs=population_IDs, core_courses=core_courses)
-    #print ncc_df
     def get_ncc_conval_serie(chunk):
         return chunk['cod_materia_acad'].values.tolist()
         
@@ -207,8 +226,6 @@ def ah_standardization(ha_df, core_courses, conval_dict, population_IDs=[], mask
             return course
             
     def ncc_conval_course(course):
-        #if course in core_courses:
-        #    print 'Wrong'
         for ncc_code, ncc_cluster in ncc_conval_dict.iteritems():
             if course in ncc_cluster:
                 return ncc_code
@@ -220,25 +237,17 @@ def ah_standardization(ha_df, core_courses, conval_dict, population_IDs=[], mask
             _comb = chunk[ mask ][ 'promedio' ].values.mean()
             chunk.loc[ mask, 'promedio' ] = _comb
     
-    #def ah_standard(chunk):
-    #    _tmp = ncc_conval_course( chunk )
-    #    _tmp = conval_course( _tmp )
-    #    return _tmp
-    
     ncc_df['clusterID'] = ncc_df['clusterID'].apply( get_ncc_name )
     ncc_gb = ncc_df.groupby('clusterID')
     ncc_conval_dict = ncc_gb.apply( get_ncc_conval_serie ).to_dict()
-    #print np.unique(sample_df.cod_materia_acad.values).shape
     sample_df['cod_materia_acad'] = sample_df['cod_materia_acad'].apply( ncc_conval_course )
-    #print np.unique(sample_df.cod_materia_acad.values).shape
     sample_df['cod_materia_acad'] = sample_df['cod_materia_acad'].apply( conval_course )
     
-    #sample_df['cod_materia_acad'] = sample_df['cod_materia_acad'].apply( ah_standard )
-    #print np.unique(sample_df.cod_materia_acad.values).shape
     combine_course( sample_df )
-    
     return sample_df
-    
+
+"""
+"""     
 def get_standard_ah(core_courses, conval_dict, population_IDs=[], start_year=1959, end_year=2013, program='Computer Science'):
     _h_program = hash( program )
     try:
@@ -274,12 +283,16 @@ def ah_no_core_courses(ha_df, core_courses=[], population_IDs=[], **kwargs):
         km.fit(data)
         abs_df['clusterID'] = km.labels_
     return abs_df
-    
+
+"""
+""" 
 def EFA(ha_df, populationIDs=[], core_courses=[], **kwargs):
     sample_df = get_ahoi(ha_df, core_courses, population_IDs)
     sample_df.pivot(index='cod_estudiante', columns='cod_materia_acad', values='promedio')    
     return
-    
+
+"""
+""" 
 def courses_features_calc(ha_df, population_IDs=[]):
     global e1071
     sample_df = get_ahoi(ha_df, population_IDs=population_IDs)
@@ -321,6 +334,8 @@ def courses_features_calc(ha_df, population_IDs=[]):
     except: pass
     return abs_df
 
+"""
+""" 
 def alpha_beta_skewness(ha_df, population_IDs=[], program='Computer Science', overwrite=False):
     global abs_df
     _h_program = hash( program )
@@ -339,11 +354,14 @@ def alpha_beta_skewness(ha_df, population_IDs=[], program='Computer Science', ov
     elif overwrite:
         abs_df = calc_n_save()
     return abs_df
-        
 
+"""
+""" 
 def get_courses_features(ha_df, population_IDs=[]):
     return alpha_beta_skewness( ha_df, population_IDs )
-    
+
+"""
+"""
 def students_features_calc(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[]):
     sample_df = get_standard_ah( core_courses, conval_dict, population_IDs )
     ap_mask = get_ap_mask()
@@ -370,6 +388,8 @@ def students_features_calc(ha_df, core_courses, conval_dict, factors_dict, popul
     except: pass
     return sf_df
 
+"""
+"""
 def factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], program='Computer Science'):
     global sf_df
     _h_program = hash( program )
@@ -379,7 +399,6 @@ def factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], p
             sf_df = _sf_df
             return sf_df
     except:
-        #sample_df = get_ahoi( get_ah(), population_IDs=population_IDs )
         _sf_df = students_features_calc( ha_df,
                                          core_courses,
                                          conval_dict,
@@ -388,10 +407,14 @@ def factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], p
         _sf_df.to_csv('./data/sf_df_%i.csv'%( _h_program ))
         sf_df = _sf_df
     return sf_df
-    
+
+"""
+"""
 def get_students_features(ha_df, core_courses, conval_dict, factors_dict, population_IDs=[], program='Computer Science'):
     return factors(ha_df, core_courses, conval_dict, factors_dict, population_IDs, program)
 
+"""
+"""
 def semesters_features_calc(ha_df, core_courses, conval_dict, population_IDs=[]):
     sample_df = get_standard_ah( core_courses, conval_dict, population_IDs )
     sample_df = sample_df.sort_values(['cod_estudiante','anio','termino'])
@@ -428,12 +451,13 @@ def semesters_features_calc(ha_df, core_courses, conval_dict, population_IDs=[])
         
     cs_gb = sample_df.groupby('cod_estudiante')
     sample_df = cs_gb.apply( get_semester_count )
-    #sample_df.info()
     ha_gb = sample_df.groupby(['cod_estudiante','anio','termino'])
     se_df = ha_gb.apply( get_semester_record )
     se_df = DataFrame.from_records( se_df.tolist() )
     return se_df
 
+"""
+"""
 def semesters(ha_df, core_courses, conval_dict, population_IDs=[], program='Computer Science'):
     global se_df
     _h_program = hash( program )
@@ -450,6 +474,9 @@ def semesters(ha_df, core_courses, conval_dict, population_IDs=[], program='Comp
         _se_df.to_csv('./data/se_df_%i.csv'%( _h_program ))
         se_df = _se_df
     return se_df
-    
+
+"""
+"""
 def get_semesters_features(ha_df, core_courses, conval_dict, population_IDs=[], program='Computer Science'):
     return semesters(ha_df, core_courses, conval_dict, population_IDs, program)
+

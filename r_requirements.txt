@@ -1,5 +1,0 @@
-e1071
-psych
-nFactors
-stats
-verification
