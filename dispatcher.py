@@ -94,6 +94,7 @@ class WSDispatcher():
                 self._start_year = start_year
                 self._end_year = end_year
                 self.academic_clusterer.set_ha_df(start_year, end_year)
+                print(self.academic_clusterer.rates)
                 self.init_estimator()
                 
             

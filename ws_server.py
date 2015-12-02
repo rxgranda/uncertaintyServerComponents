@@ -38,7 +38,7 @@ PORT = 80
 URL = "ws://8.8.8.8:80"
 
 class BackendServerProtocol(WebSocketServerProtocol):
-    dispatcher = WSDispatcher()
+    dispatchers = {}
 
     def onConnect(self, request):
         print("Client connecting: %s"%( request.peer ))
@@ -47,15 +47,22 @@ class BackendServerProtocol(WebSocketServerProtocol):
         print("WebSocket connection open.")
 
     def onMessage(self, payload, isBinary):
+        #dispatcher = WSDispatcher()
         if isBinary:
             print("Binary message received: %d bytes"%( len( payload ) ))
         else:
             json_string = format(payload.decode('utf8'))
             json_input = json_loads( json_string )
             #pprint( json_input )
+        try:
+            dispatcher = self.dispatchers[json_input['requestId']]
+        except:
+            dispatcher = WSDispatcher()
+            self.dispatchers[json_input['requestId']] = dispatcher
 
         # echo back message verbatim
-        self.sendMessage( self.dispatcher.risk( json_input ), False )
+        #self.sendMessage( self.dispatcher.risk( json_input ), False )
+        self.sendMessage( dispatcher.risk( json_input ), False )
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: %s"%( reason ))
