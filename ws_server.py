@@ -69,12 +69,12 @@ class BackendServerProtocol(WebSocketServerProtocol):
         self.sendMessage( dispatcher.risk( json_input ), False )
         
     def onClose(self, wasClean, code, reason):
-        print("WebSocket connection closed: %s"%( reason ))
         try:
             del(self.dispatchers[self.peer])
         except:
-            pass
+            pass        
         gc_collect()
+        print("WebSocket connection closed: %s"%( reason ))
 
 if __name__ == '__main__':
 
