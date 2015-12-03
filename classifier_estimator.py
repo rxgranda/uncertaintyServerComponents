@@ -100,7 +100,8 @@ class AcademicFailureEstimator():
         relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
         
         risk = np_average(possibilities, weights=student_membership, axis=0)
-        certainty = 1. - 0.2488
+        
+        certainty = 1. - 0.2488        
         quality = np_average(relative_sample_size, weights=student_membership, axis=0) #+ certainty**2
         if quality > 1:
             quality = 1.
