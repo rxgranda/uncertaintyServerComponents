@@ -30,9 +30,9 @@ from numpy import zeros as np_zeros
 from numpy import average as np_average
 
 class AcademicFailureEstimator():
-    """
-    """
     def __init__(self, academic_clusterer, **kwargs):
+        """
+        """
         if kwargs == {}:
             self._academic_clusterer = academic_clusterer
             self._academic_clusterer.semesters_cluster()
@@ -100,19 +100,16 @@ class AcademicFailureEstimator():
         relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
         
         risk = np_average(possibilities, weights=student_membership, axis=0)
-        uncertainty = 0.2488
         certainty = 1. - 0.2488
-        #quality = 0.5*( np_average(relative_sample_size, weights=student_membership, axis=0) + certainty )
-        #quality = max( student_membership )*certainty
-        quality = np_average(relative_sample_size, weights=student_membership, axis=0) + uncertainty
+        quality = np_average(relative_sample_size, weights=student_membership, axis=0) #+ certainty**2
         if quality > 1:
             quality = 1.
         
         return risk, quality
-        
-    """
-    """    
-    def get_features(self, student_ID, semester):
+ 
+    def get_features(self, student_ID, semester):        
+        """
+        """
         abs_df = self._academic_clusterer.courses_features
         tmp_df = abs_df[ abs_df['cod_materia_acad'].isin(semester) ]
         tse_df = self._academic_clusterer.semesters_features

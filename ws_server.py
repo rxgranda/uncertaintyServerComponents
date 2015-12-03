@@ -32,10 +32,12 @@ from dispatcher import *
 from sys import stdout
 from twisted.python import log
 from twisted.internet import reactor
+from gc import collect as gc_collect
 
 DEBUG = True
-PORT = 80
-URL = "ws://8.8.8.8:80"
+PORT = 8080
+URL = "ws://8.8.8.8:%d"%PORT
+MAX_CON = 100
 
 class BackendServerProtocol(WebSocketServerProtocol):
     dispatchers = {}
@@ -55,17 +57,24 @@ class BackendServerProtocol(WebSocketServerProtocol):
             json_input = json_loads( json_string )
             #pprint( json_input )
         try:
-            dispatcher = self.dispatchers[json_input['requestId']]
+            #dispatcher = self.dispatchers[json_input['requestId']]
+            dispatcher = self.dispatchers[self.peer]
         except:
             dispatcher = WSDispatcher()
-            self.dispatchers[json_input['requestId']] = dispatcher
+            #self.dispatchers[json_input['requestId']] = dispatcher
+            self.dispatchers[self.peer] = dispatcher
 
         # echo back message verbatim
         #self.sendMessage( self.dispatcher.risk( json_input ), False )
         self.sendMessage( dispatcher.risk( json_input ), False )
-
+        
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: %s"%( reason ))
+        try:
+            del(self.dispatchers[self.peer])
+        except:
+            pass
+        gc_collect()
 
 if __name__ == '__main__':
 
@@ -73,7 +82,7 @@ if __name__ == '__main__':
 
     factory = WebSocketServerFactory(URL, debug=DEBUG)
     factory.protocol = BackendServerProtocol
-    #factory.setProtocolOptions(maxConnections=2)
+    factory.setProtocolOptions(maxConnections=MAX_CON)
 
     reactor.listenTCP( PORT, factory )
     reactor.run()

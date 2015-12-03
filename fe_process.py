@@ -24,6 +24,14 @@
 # THE SOFTWARE.
 #
 ###############################################################################
+
+"""@package docstring
+Feature Extraction module.
+
+This module provides students and semesters data as DataFrame structures, academic
+and demographic information are used to extract the students and courses features.
+"""
+
 import data_loader
 import numpy as np
 import pandas as pd
@@ -61,26 +69,49 @@ se_df = DataFrame()
 """
 _aberrant_value_code = -1000000
 
-"""
-"""
 def data_structure_from_file(filepath):
+    """ 
+    Get a JSON file as a python data structure.
+    
+    The structures soported are list and dict.
+    
+    Params:
+        filepath: The path and name from the file
+        
+    Returns:
+        A dict, list, or nested structure.
+    """
     _var = None
     with open(filepath) as infile:
         _var = json_load( infile )
     return _var
 
-"""
-"""
 def get_ap_mask(cut=6.0):
+    """
+    Get a Numpy mask to select the approving courses for a student academic history.
+    
+    Params:
+        cut: The cut value for approving.
+        
+    Returns:
+        The numpy mask for select approved courses.
+    """
     ap_courses_mask = lambda x: ( ( x['estado_mat_tomada']=='AP' ) \
                                   | ( x['estado_mat_tomada']=='IA' ) \
                                   | ( ( x['estado_mat_tomada']=='IN' ) & ( x['promedio']>=cut ) ) 
                                 )
     return ap_courses_mask
 
-"""
-"""
 def get_rp_mask(cut=6.0):
+    """
+    Get a Numpy mask to select the reprobating courses for a student academic history.
+    
+    Params:
+        cut: The cut value for approving.
+        
+    Returns:
+        The numpy mask for select reprobated courses.
+    """
     rp_courses_mask = lambda x: ( ( x['estado_mat_tomada']=='RP' ) \
                                   | ( x['estado_mat_tomada']=='IR' ) \
                                   | ( ( x['estado_mat_tomada']=='IN' ) & ( x['promedio']<6.0 ) ) \
@@ -88,8 +119,6 @@ def get_rp_mask(cut=6.0):
                                 )
     return rp_courses_mask
 
-"""
-"""
 def GPA_calc(ha_df):
     ha_gb = ha_df.groupby('cod_estudiante')
     ap_mask = get_ap_mask()

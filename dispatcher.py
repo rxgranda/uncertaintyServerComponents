@@ -60,8 +60,8 @@ class WSDispatcher():
                                                      self._structures['conval_dict'],
                                                      self._structures['factors_dict'], 
                                                      self._structures['_programs'] )
-        self._start_year = 1999 
-        self._end_year = 2013
+        self._start_year = -1 
+        self._end_year = 1
         
         self.init_estimator()
         
@@ -93,9 +93,9 @@ class WSDispatcher():
             if self._start_year != start_year or self._end_year != end_year:
                 self._start_year = start_year
                 self._end_year = end_year
-                self.academic_clusterer.set_ha_df(start_year, end_year)
-                print(self.academic_clusterer.rates)
+                self.academic_clusterer.set_ha_df(start_year=start_year, end_year=end_year)
                 self.init_estimator()
+                print(self.academic_clusterer.rates)
                 
             
             risk, quality = self.academic_estimator.predict( student_ID=student_ID,
