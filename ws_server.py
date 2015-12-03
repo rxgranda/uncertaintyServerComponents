@@ -35,9 +35,17 @@ from twisted.internet import reactor
 from gc import collect as gc_collect
 
 DEBUG = True
-PORT = 8080
-URL = "ws://8.8.8.8:%d"%PORT
+PORT = 80
+URL = "ws://8.8.8.8:%d"
 MAX_CON = 100
+
+"""@package docstring
+Websocket interface module.
+
+Websocket interface implementation for prediction model implementation, input
+interfaces are: studentID, and a list of courseID, provides the quality and
+prediction values after classification/estimation process.
+"""
 
 class BackendServerProtocol(WebSocketServerProtocol):
     dispatchers = {}
@@ -80,7 +88,7 @@ if __name__ == '__main__':
 
     log.startLogging( stdout )
 
-    factory = WebSocketServerFactory(URL, debug=DEBUG)
+    factory = WebSocketServerFactory(URL%PORT, debug=DEBUG)
     factory.protocol = BackendServerProtocol
     factory.setProtocolOptions(maxConnections=MAX_CON)
 

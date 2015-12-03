@@ -73,7 +73,7 @@ class AcademicClusterer():
         #self._ha_df = get_ah(start_year, end_year)
         _ha_df = get_ah(start_year, end_year)
         #print _ha_df['anio'].min(), start_year
-        #self._ha_df = _ha_df
+        self._ha_df = _ha_df
         self.students_cluster()
         self.semesters_cluster()
 
@@ -81,43 +81,43 @@ class AcademicClusterer():
     """
     @property
     def students(self):
-        if self._students is None:
-            self._students = population_IDs_by_program( data_loader.co_df,
-                                                        self.__programs )
+        #if self._students is None:
+        self._students = population_IDs_by_program( data_loader.co_df,
+                                                    self.__programs )
         return self._students
     
     """
     """
     @property
     def students_features(self):
-        if self._students_features is None:
-            self._students_features = get_students_features( self._ha_df,
-                                                             self._core_courses,
-                                                             self._conval_dict,
-                                                             self._factors_dict,
-                                                             self.students,
-                                                             self._program )
+        #if self._students_features is None:
+        self._students_features = get_students_features( self._ha_df,
+                                                         self._core_courses,
+                                                         self._conval_dict,
+                                                         self._factors_dict,
+                                                         self.students,
+                                                         self._program )
         return self._students_features
     
     """
     """
     @property
     def courses_features(self):
-        if self._courses_features is None:
-            self._courses_features = get_courses_features( self._ha_df,
-                                                           self._students )
+        #if self._courses_features is None:
+        self._courses_features = get_courses_features( self._ha_df,
+                                                       self._students )
         return self._courses_features
         
     """
     """
     @property
     def semesters_features(self):
-        if self._semesters_features is None:
-            self._semesters_features = get_semesters_features( self._ha_df,
-                                                               self._core_courses,
-                                                               self._conval_dict,
-                                                               self.students,
-                                                               self._program )
+        #if self._semesters_features is None:
+        self._semesters_features = get_semesters_features( self._ha_df,
+                                                           self._core_courses,
+                                                           self._conval_dict,
+                                                           self.students,
+                                                           self._program )
         self._semesters_features['materias_reprobadas'] = self._semesters_features['materias_reprobadas'].fillna('')
         self._semesters_features['ha_reprobado'] = self._semesters_features['materias_reprobadas'].apply(lambda x: x=='')
         return self._semesters_features
@@ -181,6 +181,7 @@ class AcademicClusterer():
             km = kmeans( kwargs )
             km.fit(data)
         cntr, L = km.cluster_centers_, km.labels_
+        #print 'L',L
         #self.semesters_features['km_cluster_ID'] = L
         self.se_df['km_cluster_ID'] = L
         self.cntr_se = cntr
