@@ -81,31 +81,31 @@ class AcademicClusterer():
     """
     @property
     def students(self):
-        #if self._students is None:
-        self._students = population_IDs_by_program( data_loader.co_df,
-                                                    self.__programs )
+        if self._students is None:
+        	self._students = population_IDs_by_program( data_loader.co_df,
+        	                                            self.__programs )
         return self._students
     
     """
     """
     @property
     def students_features(self):
-        #if self._students_features is None:
-        self._students_features = get_students_features( self._ha_df,
-                                                         self._core_courses,
-                                                         self._conval_dict,
-                                                         self._factors_dict,
-                                                         self.students,
-                                                         self._program )
+        if self._students_features is None:
+        	self._students_features = get_students_features( self._ha_df,
+        	                                                 self._core_courses,
+        	                                                 self._conval_dict,
+        	                                                 self._factors_dict,
+        	                                                 self.students,
+        	                                                 self._program )
         return self._students_features
     
     """
     """
     @property
     def courses_features(self):
-        #if self._courses_features is None:
-        self._courses_features = get_courses_features( self._ha_df,
-                                                       self._students )
+        if self._courses_features is None:
+        	self._courses_features = get_courses_features( self._ha_df,
+        	                                               self._students )
         return self._courses_features
         
     """
