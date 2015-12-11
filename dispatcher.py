@@ -95,7 +95,7 @@ class WSDispatcher():
                 self._end_year = end_year
                 self.academic_clusterer.set_ha_df(start_year=start_year, end_year=end_year)
                 self.init_estimator()
-                print(self.academic_clusterer.rates)
+                #print(self.academic_clusterer.rates)
                 
             
             risk, quality = self.academic_estimator.predict( student_ID=student_ID,

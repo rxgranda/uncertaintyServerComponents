@@ -90,8 +90,8 @@ class AcademicClusterer():
     """
     @property
     def students_features(self):
-        if self._students_features is None:
-        	self._students_features = get_students_features( self._ha_df,
+        #if self._students_features is None:
+        self._students_features = get_students_features( self._ha_df,
         	                                                 self._core_courses,
         	                                                 self._conval_dict,
         	                                                 self._factors_dict,
@@ -103,8 +103,8 @@ class AcademicClusterer():
     """
     @property
     def courses_features(self):
-        if self._courses_features is None:
-        	self._courses_features = get_courses_features( self._ha_df,
+        #if self._courses_features is None:
+        self._courses_features = get_courses_features( self._ha_df,
         	                                               self._students )
         return self._courses_features
         

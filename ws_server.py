@@ -35,7 +35,7 @@ from twisted.internet import reactor
 from gc import collect as gc_collect
 
 DEBUG = True
-PORT = 80
+PORT = 8000
 URL = "ws://8.8.8.8:%d"
 MAX_CON = 100
 
