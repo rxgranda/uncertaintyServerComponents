@@ -29,7 +29,7 @@ import pandas as pd
 import warnings
 from numpy import genfromtxt, savetxt
 from pandas import DataFrame
-from fe_process import *
+from fe_process import espol, kuleuven
 from sklearn.cluster import KMeans as kmeans
 from skfuzzy import cmeans
 
@@ -45,8 +45,10 @@ class AcademicClusterer():
                          'n_materias']
     STUDENTS_F_LABELS = ['factor%d_measure'%i for i in xrange(1, N+1)]
 
-    def __init__(self, core_courses, conval_dict, factors_dict, _programs, program='Computer Science'):
-        self._ha_df = get_ah()
+    def __init__(self, core_courses, conval_dict, factors_dict, _programs, source='espol', program='Computer Science'):
+        self.source_module = self.get_module(source)
+        self.source = source
+	self._ha_df = self.source_module.get_ah()
         self._core_courses = core_courses
         self._conval_dict = conval_dict
         self._factors_dict = factors_dict
@@ -59,8 +61,29 @@ class AcademicClusterer():
         self._semesters_features = None
         self._rates = None
         self.se_df = None
-        AcademicClusterer.STUDENTS_F_LABELS = ['%s_measure'%factor for factor in factors_dict.keys()]
-    
+        self.STUDENTS_F_LABELS = ['%s_measure'%factor for factor in factors_dict.keys()]
+
+    """
+    """
+    def get_module(self, source):
+        if source == 'espol':
+            self.year_attr = 'anio'
+            self.failed_courses_attr = 'materias_reprobadas'
+            self.studentId_attr = 'cod_estudiante'
+            self.course_attr = 'cod_materia_acad'
+            return espol
+        elif source == 'kuleuven':
+            self.year_attr = 'year'
+            self.failed_courses_attr = 'failed_courses'
+            self.studentId_attr = 'student'
+            self.course_attr = 'course'
+            self.SEMESTERS_F_LABELS = ['year_n',
+                         'alpha_total',
+                         'beta_total',
+                         'skewness_total',
+                         'courses_num']
+            return kuleuven
+
     """
     """
     @property
@@ -71,19 +94,26 @@ class AcademicClusterer():
     """
     def set_ha_df(self, start_year, end_year):
         #self._ha_df = get_ah(start_year, end_year)
-        _ha_df = get_ah(start_year, end_year)
+        _ha_df = self.source_module.get_ah(start_year, end_year)
         #print _ha_df['anio'].min(), start_year
         self._ha_df = _ha_df
         self.students_cluster()
         self.semesters_cluster()
 
     """
+
     """
     @property
     def students(self):
         if self._students is None:
-        	self._students = population_IDs_by_program( data_loader.co_df,
-        	                                            self.__programs )
+	    if self.source == 'espol':
+	        co_df = espol.espol_loader.co_df
+	    #elif self.source == 'kuleuven':
+	    #    co_df = kuleuven_loader.co_df
+            elif self.source == 'kuleuven':
+                co_df = kuleuven.kuleuven_loader.cp_df
+            self._students = self.source_module.population_IDs_by_program( co_df,
+                                                            self.__programs )
         return self._students
     
     """
@@ -91,7 +121,7 @@ class AcademicClusterer():
     @property
     def students_features(self):
         #if self._students_features is None:
-        self._students_features = get_students_features( self._ha_df,
+        self._students_features = self.source_module.get_students_features( self._ha_df,
         	                                                 self._core_courses,
         	                                                 self._conval_dict,
         	                                                 self._factors_dict,
@@ -104,7 +134,7 @@ class AcademicClusterer():
     @property
     def courses_features(self):
         #if self._courses_features is None:
-        self._courses_features = get_courses_features( self._ha_df,
+        self._courses_features = self.source_module.get_courses_features( self._ha_df,
         	                                               self._students )
         return self._courses_features
         
@@ -113,13 +143,13 @@ class AcademicClusterer():
     @property
     def semesters_features(self):
         #if self._semesters_features is None:
-        self._semesters_features = get_semesters_features( self._ha_df,
+        self._semesters_features = self.source_module.get_semesters_features( self._ha_df,
                                                            self._core_courses,
                                                            self._conval_dict,
                                                            self.students,
                                                            self._program )
-        self._semesters_features['materias_reprobadas'] = self._semesters_features['materias_reprobadas'].fillna('')
-        self._semesters_features['ha_reprobado'] = self._semesters_features['materias_reprobadas'].apply(lambda x: x=='')
+        self._semesters_features[self.failed_courses_attr] = self._semesters_features[self.failed_courses_attr].fillna('')
+        self._semesters_features['ha_reprobado'] = self._semesters_features[self.failed_courses_attr].apply(lambda x: x=='')
         return self._semesters_features
         
     """
@@ -160,23 +190,23 @@ class AcademicClusterer():
         34		0.000958
     """    
     def semesters_cluster(self, **kwargs):
-        start_year = self._ha_df['anio'].values.min()
-        end_year = self._ha_df['anio'].values.max()
+        start_year = self._ha_df[self.year_attr].values.min()
+        end_year = self._ha_df[self.year_attr].values.max()
         self.se_df = self.semesters_features
-        self.se_df = self.se_df[ (self.se_df['anio'].values >= start_year) & (self.se_df['anio'].values <= end_year) ]
+        self.se_df = self.se_df[ (self.se_df[self.year_attr].values >= start_year) & (self.se_df[self.year_attr].values <= end_year) ]
         _h_program = hash( self._program )
         self.se_df.fillna(0)
-        data = self.se_df[ AcademicClusterer.SEMESTERS_F_LABELS ].as_matrix()
+        data = self.se_df[ self.SEMESTERS_F_LABELS ].as_matrix()
         if kwargs == {}:
             C = 3
             try:
-                c_init = genfromtxt('./data/centers_%d.csv'%_h_program, delimiter=',')
+                c_init = genfromtxt('./data/%s/centers_%d.csv'%(self.source,_h_program), delimiter=',')
                 km = kmeans(init=c_init, n_clusters=C, n_init=10)
                 km.fit(data)
             except:
                 km = kmeans(init='k-means++', n_clusters=C, n_init=10)
                 km.fit(data)
-                savetxt('./data/centers_%d.csv'%_h_program, km.cluster_centers_, delimiter=',')
+                savetxt('./data/%s/centers_%d.csv'%(self.source,_h_program), km.cluster_centers_, delimiter=',')
         else:
             km = kmeans( kwargs )
             km.fit(data)
@@ -201,7 +231,7 @@ class AcademicClusterer():
         r_df = pd.merge( self.se_df,
                          #self.semesters_features,
                          self.students_features,
-                         on='cod_estudiante',
+                         on=self.studentId_attr,
                          how='left' )
         r_gb = r_df.groupby( ['km_cluster_ID','fcm_cluster_ID'] )
         df = DataFrame.from_records( list( r_gb.apply( rate_record ) ) )

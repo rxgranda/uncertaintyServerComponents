@@ -112,13 +112,13 @@ class AcademicFailureEstimator():
         """
         """
         abs_df = self._academic_clusterer.courses_features
-        tmp_df = abs_df[ abs_df['cod_materia_acad'].isin(semester) ]
+        tmp_df = abs_df[ abs_df[self._academic_clusterer.course_attr].isin(semester) ]
         tse_df = self._academic_clusterer.semesters_features
-        tse_df = tse_df[ tse_df['cod_estudiante']==student_ID ]
+        tse_df = tse_df[ tse_df[self._academic_clusterer.studentId_attr]==student_ID ]
         if tse_df.empty:
             semester_lvl = 1
         else:
-            semester_lvl = tse_df['semestre'].values.max() + 1
+            semester_lvl = tse_df[self._academic_clusterer.SEMESTERS_F_LABELS[0]].values.max() + 1
         alpha = tmp_df['alpha'].values.sum()
         beta = tmp_df['beta'].values.sum()
         skewness = tmp_df['skewness'].values.sum()
@@ -127,7 +127,7 @@ class AcademicFailureEstimator():
         semester_features = (semester_lvl, alpha, beta, skewness, n_courses)
         
         cs_df = self._academic_clusterer.students_features
-        cs_df = cs_df[ cs_df['cod_estudiante'] == student_ID ]
+        cs_df = cs_df[ cs_df[self._academic_clusterer.studentId_attr] == student_ID ]
         if cs_df.empty:
             student_features = np_zeros((1,5))
         else:        

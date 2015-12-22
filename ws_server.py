@@ -63,14 +63,20 @@ class BackendServerProtocol(WebSocketServerProtocol):
         else:
             json_string = format(payload.decode('utf8'))
             json_input = json_loads( json_string )
+            in_source = json_input['source']
+            print in_source
             #pprint( json_input )
         try:
             #dispatcher = self.dispatchers[json_input['requestId']]
-            dispatcher = self.dispatchers[self.peer]
+            if self.dispatchers[self.peer]['source'] != in_source:
+               raise Exception
+            dispatcher = self.dispatchers[self.peer]['dispatcher']
         except:
-            dispatcher = WSDispatcher()
+            dispatcher = WSDispatcher(source=in_source)
             #self.dispatchers[json_input['requestId']] = dispatcher
-            self.dispatchers[self.peer] = dispatcher
+            self.dispatchers[self.peer] = {}
+            self.dispatchers[self.peer]['dispatcher'] = dispatcher
+            self.dispatchers[self.peer]['source'] = in_source
 
         # echo back message verbatim
         #self.sendMessage( self.dispatcher.risk( json_input ), False )

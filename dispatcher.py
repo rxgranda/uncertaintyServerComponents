@@ -23,21 +23,23 @@
 #
 ###############################################################################
 
-from fe_process import *
+from fe_process import espol, kuleuven
 from json import dumps as json_dumps
 from clusterer import AcademicClusterer
 from classifier_estimator import AcademicFailureEstimator
 
-def get_structures( programs_path='./data/_cs_program.txt',
-                    core_courses_path='./data/_cs_courses.txt',
-                    conval_dict_path='./data/_conval_dict.txt',
-                    factors_dict_path='./data/_cs_factors.txt',
-                    program='Computer Science' ):
+data_structure_from_file = espol.data_structure_from_file
+
+def get_structures_espol( programs_path='./data/espol/_cs_program.txt',
+                    	  core_courses_path='./data/espol/_cs_courses.txt',
+	                  conval_dict_path='./data/espol/_conval_dict.txt',
+         	          factors_dict_path='./data/espol/_cs_factors.txt',
+                	  program='Computer Science' ):
     _PROGRAM = data_structure_from_file(programs_path)
     _COURSES = data_structure_from_file(core_courses_path)
     _CONVALD = data_structure_from_file(conval_dict_path)
     _FACTORS = data_structure_from_file(factors_dict_path)
-    _STUDENTS = population_IDs_by_program( data_loader.co_df, _PROGRAM )
+    _STUDENTS = espol.population_IDs_by_program( espol.espol_loader.co_df, _PROGRAM )
     
     structures_d = {'_programs':_PROGRAM,
                     'core_courses':_COURSES,
@@ -46,6 +48,25 @@ def get_structures( programs_path='./data/_cs_program.txt',
                     'population_IDs':_STUDENTS,
                     }    
     return structures_d
+
+def get_structures_kuleuven( programs_path='',
+                          core_courses_path='',
+                          conval_dict_path='',
+                          factors_dict_path='./data/kuleuven/_cs_factors.txt',
+                          program='Computer Science' ):
+    _PROGRAM = {}#data_structure_from_file(programs_path)
+    _COURSES = []#data_structure_from_file(core_courses_path)
+    _CONVALD = {}#data_structure_from_file(conval_dict_path)
+    _FACTORS = data_structure_from_file(factors_dict_path)
+    _STUDENTS = kuleuven.population_IDs_by_program( kuleuven.kuleuven_loader.cp_df, _PROGRAM )
+
+    structures_d = {'_programs':_PROGRAM,
+                    'core_courses':_COURSES,
+                    'conval_dict':_CONVALD,
+                    'factors_dict':_FACTORS,
+                    'population_IDs':_STUDENTS,
+                    }
+    return structures_d
     
 class WSDispatcher():
 
@@ -53,13 +74,17 @@ class WSDispatcher():
     
     """
     """
-    def __init__(self):
-        self._structures = get_structures()
+    def __init__(self, source='espol'):
+	if source == 'espol':
+	        self._structures = get_structures_espol()
+	elif source == 'kuleuven':
+		self._structures = get_structures_kuleuven()
         
         self.academic_clusterer = AcademicClusterer( self._structures['core_courses'],
                                                      self._structures['conval_dict'],
                                                      self._structures['factors_dict'], 
-                                                     self._structures['_programs'] )
+                                                     self._structures['_programs'],
+                                                     source=source )
         self._start_year = -1 
         self._end_year = 1
         
