@@ -51,7 +51,7 @@ class AcademicFailureEstimator():
     """
     def init_students_classifier_fn(self, **kwargs):
         if kwargs == {}:
-            m = 1.25; error = 1.e-10; maxiter = 100
+            m = self._academic_clusterer._m; error = 1.e-10; maxiter = 100
             clf = lambda data: cmeans_predict( data.T, self._cntr_sf, m, error, maxiter )
         else:
             clf = lambda data: cmeans_predict( data.T, self._cntr_sf, kwargs )
@@ -96,7 +96,6 @@ class AcademicFailureEstimator():
         student_membership = U_.T[0]
         
         set_mask = ( self._rates['km_cluster_ID'] == semester_type[0] )
-        print self._rates    
         possibilities = self._rates[ set_mask ]['ratio'].values
         relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
         

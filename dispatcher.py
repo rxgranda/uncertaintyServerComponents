@@ -77,16 +77,22 @@ class WSDispatcher():
     def __init__(self, source='espol'):
         if source == 'espol':
             self._structures = get_structures_espol()
-            C = 5
+            C_f = 5
+            C_k = 3
+            m = 1.25
         elif source == 'kuleuven':
             self._structures = get_structures_kuleuven()
-            C = 3
+            C_f = 3
+            C_k = 2
+            m = 2
         self.academic_clusterer = AcademicClusterer( self._structures['core_courses'],
                                                      self._structures['conval_dict'],
                                                      self._structures['factors_dict'], 
                                                      self._structures['_programs'],
                                                      source=source,
-                                                     C=C )
+                                                     C_f=C_f,
+                                                     C_k=C_k,
+                                                     m=m )
         self._start_year = -1 
         self._end_year = 1
         

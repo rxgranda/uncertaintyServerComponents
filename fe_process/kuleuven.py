@@ -303,6 +303,7 @@ def students_features_calc(ha_df, core_courses, conval_dict, factors_dict, popul
     sf_df = ha_gb.apply( get_factors )
     try: sf_df = DataFrame.from_records( sf_df.tolist() )
     except: pass
+    sf_df = sf_df.fillna(0.0)
     return sf_df
 
 """

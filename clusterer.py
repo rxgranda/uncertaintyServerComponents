@@ -45,7 +45,7 @@ class AcademicClusterer():
                          'n_materias']
     STUDENTS_F_LABELS = ['factor%d_measure'%i for i in xrange(1, N+1)]
 
-    def __init__(self, core_courses, conval_dict, factors_dict, _programs, source='espol', program='Computer Science', C=5):
+    def __init__(self, core_courses, conval_dict, factors_dict, _programs, source='espol', program='Computer Science', C_f=5, C_k=3, m=1.25):
         self.source_module = self.get_module(source)
         self.source = source
 	self._ha_df = self.source_module.get_ah()
@@ -62,7 +62,9 @@ class AcademicClusterer():
         self._rates = None
         self.se_df = None
         self.STUDENTS_F_LABELS = ['%s_measure'%factor for factor in factors_dict.keys()]
-        self._C = C
+        self._C_f = C_f
+        self._C_k = C_k
+        self._m = m
 
     """
     """
@@ -169,7 +171,7 @@ class AcademicClusterer():
         sf_df = sf_df.fillna(0)
         data = sf_df[ self.STUDENTS_F_LABELS ].as_matrix()
         if kwargs == {}:
-            C = self._C; m = 1.25; error = 1.e-10; maxiter = 100
+            C = self._C_f; m = self._m; error = 1.e-10; maxiter = 100
             cntr, U, _, _, _, _, fpc = cmeans( data.T,
                                                C,
                                                m,
@@ -199,7 +201,7 @@ class AcademicClusterer():
         self.se_df.fillna(0)
         data = self.se_df[ self.SEMESTERS_F_LABELS ].as_matrix()
         if kwargs == {}:
-            C = 3
+            C = self._C_k
             try:
                 c_init = genfromtxt('./data/%s/centers_%d.csv'%(self.source,_h_program), delimiter=',')
                 km = kmeans(init=c_init, n_clusters=C, n_init=10)
