@@ -183,7 +183,7 @@ def ah_GPA(ha_df, gpa_df):
 
 """
 """ 
-def get_ah(start_year=1959, end_year=2013):
+def get_ah(start_year=1959, end_year=2015):
     global gpaha_df
     if gpaha_df.empty:
         ha_df = kuleuven_loader.ha_df
@@ -370,6 +370,9 @@ def semesters_features_calc(ha_df, core_courses, conval_dict, population_IDs=[])
     ha_gb = sample_df.groupby(['student','year'])
     se_df = ha_gb.apply( get_semester_record )
     se_df = DataFrame.from_records( se_df.tolist() )
+    se_df.loc[ se_df['alpha_total'].isnull(),'alpha_total' ] = _aberrant_value_code
+    se_df.loc[ se_df['beta_total'].isnull(),'beta_total' ] = _aberrant_value_code
+    se_df.loc[ se_df['skewness_total'].isnull(),'skewness_total' ] = _aberrant_value_code
     return se_df
 
 """

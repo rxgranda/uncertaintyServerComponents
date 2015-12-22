@@ -75,16 +75,18 @@ class WSDispatcher():
     """
     """
     def __init__(self, source='espol'):
-	if source == 'espol':
-	        self._structures = get_structures_espol()
-	elif source == 'kuleuven':
-		self._structures = get_structures_kuleuven()
-        
+        if source == 'espol':
+            self._structures = get_structures_espol()
+            C = 5
+        elif source == 'kuleuven':
+            self._structures = get_structures_kuleuven()
+            C = 3
         self.academic_clusterer = AcademicClusterer( self._structures['core_courses'],
                                                      self._structures['conval_dict'],
                                                      self._structures['factors_dict'], 
                                                      self._structures['_programs'],
-                                                     source=source )
+                                                     source=source,
+                                                     C=C )
         self._start_year = -1 
         self._end_year = 1
         

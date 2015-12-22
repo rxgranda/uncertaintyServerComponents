@@ -95,7 +95,8 @@ class AcademicFailureEstimator():
         U_, _, _, _, _, fpc_ = self.students_classifier_fn(student_features)
         student_membership = U_.T[0]
         
-        set_mask = ( self._rates['km_cluster_ID'] == semester_type[0] )        
+        set_mask = ( self._rates['km_cluster_ID'] == semester_type[0] )
+        print self._rates    
         possibilities = self._rates[ set_mask ]['ratio'].values
         relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
         

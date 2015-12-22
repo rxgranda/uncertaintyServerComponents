@@ -45,7 +45,7 @@ class AcademicClusterer():
                          'n_materias']
     STUDENTS_F_LABELS = ['factor%d_measure'%i for i in xrange(1, N+1)]
 
-    def __init__(self, core_courses, conval_dict, factors_dict, _programs, source='espol', program='Computer Science'):
+    def __init__(self, core_courses, conval_dict, factors_dict, _programs, source='espol', program='Computer Science', C=5):
         self.source_module = self.get_module(source)
         self.source = source
 	self._ha_df = self.source_module.get_ah()
@@ -62,6 +62,7 @@ class AcademicClusterer():
         self._rates = None
         self.se_df = None
         self.STUDENTS_F_LABELS = ['%s_measure'%factor for factor in factors_dict.keys()]
+        self._C = C
 
     """
     """
@@ -168,7 +169,7 @@ class AcademicClusterer():
         sf_df = sf_df.fillna(0)
         data = sf_df[ self.STUDENTS_F_LABELS ].as_matrix()
         if kwargs == {}:
-            C = 5; m = 1.25; error = 1.e-10; maxiter = 100
+            C = self._C; m = 1.25; error = 1.e-10; maxiter = 100
             cntr, U, _, _, _, _, fpc = cmeans( data.T,
                                                C,
                                                m,
