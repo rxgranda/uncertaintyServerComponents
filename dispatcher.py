@@ -83,7 +83,7 @@ class WSDispatcher():
         elif source == 'kuleuven':
             self._structures = get_structures_kuleuven()
             C_f = 3
-            C_k = 2
+            C_k = 5
             m = 2
         self.academic_clusterer = AcademicClusterer( self._structures['core_courses'],
                                                      self._structures['conval_dict'],
@@ -128,7 +128,7 @@ class WSDispatcher():
                 self._end_year = end_year
                 self.academic_clusterer.set_ha_df(start_year=start_year, end_year=end_year)
                 self.init_estimator()
-                #print(self.academic_clusterer.rates)
+                print(self.academic_clusterer.rates)
                 
             
             risk, quality = self.academic_estimator.predict( student_ID=student_ID,

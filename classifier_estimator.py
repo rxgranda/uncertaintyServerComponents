@@ -67,12 +67,13 @@ class AcademicFailureEstimator():
     """
     def init_semesters_classifier_fn(self, **kwargs):
         if kwargs == {}:
-            svc = SVC()
+            svc = SVC(kernel='linear', gamma=10e3, probability=True)
         else:
             svc = SVC(kwargs)
         svc.fit( self._cntr_se, range( len( self._cntr_se ) ) )
         svc_predict = svc.predict
-        clf = lambda data: svc_predict( data )
+        svc_prob = svc.predict_proba
+        clf = lambda data: [svc_predict( data ), svc_prob(data)]
         self._semesters_clf = clf       
     
     """
@@ -94,18 +95,20 @@ class AcademicFailureEstimator():
         #U_, U0_, d_, Jm_, p_, fpc_
         U_, _, _, _, _, fpc_ = self.students_classifier_fn(student_features)
         student_membership = U_.T[0]
-        
-        set_mask = ( self._rates['km_cluster_ID'] == semester_type[0] )
+        print(semester_type)
+        set_mask = ( self._rates['km_cluster_ID'] == semester_type[0][0] )
         possibilities = self._rates[ set_mask ]['ratio'].values
         relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
         
-        risk = np_average(possibilities, weights=student_membership, axis=0)
+        risk = np_average(possibilities, weights=student_membership, axis=0)\
+               + semester_type[1][0][semester_type[0][0]]**2
         
-        certainty = 1. - 0.2488        
+        #certainty = 1. - 0.2488        
         quality = np_average(relative_sample_size, weights=student_membership, axis=0) #+ certainty**2
         if quality > 1:
             quality = 1.
-        
+        if risk > 1:
+            risk = 1.
         return risk, quality
  
     def get_features(self, student_ID, semester):        
@@ -125,7 +128,7 @@ class AcademicFailureEstimator():
         n_courses = len( semester )
         
         semester_features = (semester_lvl, alpha, beta, skewness, n_courses)
-        
+        print(semester_features)
         cs_df = self._academic_clusterer.students_features
         cs_df = cs_df[ cs_df[self._academic_clusterer.studentId_attr] == student_ID ]
         if cs_df.empty:
