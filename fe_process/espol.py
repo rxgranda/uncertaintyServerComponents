@@ -53,9 +53,9 @@ pd.options.mode.use_inf_as_null = True
 """
 """
 e1071 = importr('e1071')
-psych = importr('psych')
-nFactors = importr('nFactors')
-stats = importr('stats')
+#psych = importr('psych')
+#nFactors = importr('nFactors')
+#stats = importr('stats')
 
 """
 """

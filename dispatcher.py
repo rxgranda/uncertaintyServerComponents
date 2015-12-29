@@ -75,6 +75,7 @@ class WSDispatcher():
     """
     """
     def __init__(self, source='espol'):
+        self._source = source
         if source == 'espol':
             self._structures = get_structures_espol()
             C_f = 5
@@ -102,6 +103,9 @@ class WSDispatcher():
         self.academic_estimator = AcademicFailureEstimator(self.academic_clusterer)
         self.academic_estimator.init_semesters_classifier_fn()
         self.academic_estimator.init_students_classifier_fn()
+        if self._source == 'kuleuven':
+            self.academic_estimator.init_classifier_fn()
+        
         
     @property
     def structures(self):
@@ -128,7 +132,7 @@ class WSDispatcher():
                 self._end_year = end_year
                 self.academic_clusterer.set_ha_df(start_year=start_year, end_year=end_year)
                 self.init_estimator()
-                print(self.academic_clusterer.rates)
+                #print(self.academic_clusterer.rates)
                 
             
             risk, quality = self.academic_estimator.predict( student_ID=student_ID,
