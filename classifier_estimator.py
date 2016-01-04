@@ -97,8 +97,25 @@ class AcademicFailureEstimator():
         se_df = self._academic_clusterer.semesters_features
         sf_df = self._academic_clusterer.students_features
         ss_df = pd_merge( se_df, sf_df, on='student' )
+        ########################################################################
+        ss_df['_class'] = 0
+
+        mask_c = {}
+        mask_c[0] = ss_df['beta_total']<=-1.5
+        mask_c[1] = (ss_df['beta_total']>-1.5) & (ss_df['beta_total']<-0.862)
+        mask_c[2] = (ss_df['beta_total']>=-0.862) & (ss_df['beta_total']<0)
+        mask_c[3] = ss_df['beta_total']>=0
+
+        for i in mask_c.keys():
+            ss_df.loc[ mask_c[i], '_class' ] = i
+        ########################################################################
+
+        
         X = ss_df[ FEATURES ].as_matrix()
-        y = ss_df.ha_reprobado.apply(lambda x: 0 if x else 1).values
+        
+        #y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+        y = ss_df['_class'].values
+        
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=7)
         
