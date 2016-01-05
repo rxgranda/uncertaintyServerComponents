@@ -3,7 +3,7 @@
 Test performed on Logistic Regression classifier, and SVC with isotonic and sigmoid calibration.
 This test conclude the use of Logistic Regression as classifier with hard cluster for KULeuven data.
 
-1. Logistic:
+1. Logistic
 ⋅⋅* Brier: 0.378
 ⋅⋅* Precision: 0.513
 ⋅⋅* Recall: 0.347
