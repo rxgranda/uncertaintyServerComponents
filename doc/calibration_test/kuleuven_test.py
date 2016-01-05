@@ -22,8 +22,9 @@ FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
             'courses_num']
 
 
-X = ss_df[FEATURES].as_matrix()
-y = ss_df.ha_reprobado.apply(lambda x: 0 if x else 1).values
+X = ss_df[FEATURES+['_class']].as_matrix()
+y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+#y = ss_df['_class'].values
 
 # split train, test for calibration
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=7)
@@ -48,12 +49,16 @@ def plot_calibration_curve(est, name, fig_index):
                       (est, name),
                       (isotonic, name + ' + Isotonic'),
                       (sigmoid, name + ' + Sigmoid')]:
-        clf.fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
+        #clf.fit(X_train, y_train)
+        clf.fit(X_train[:,:10], X_train[:, 10])
+        #y_pred = clf.predict(X_test)
+        y_pred = clf.predict(X_test[:,:10])
         if hasattr(clf, "predict_proba"):
-            prob_pos = clf.predict_proba(X_test)[:, 1]
+            #prob_pos = clf.predict_proba(X_test)[:, 1]
+            prob_pos = clf.predict_proba(X_test[:,:10])[:, 1]
         else:  # use decision function
-            prob_pos = clf.decision_function(X_test)
+            #prob_pos = clf.decision_function(X_test)
+            prob_pos = clf.decision_function(X_test[:,:10])[:, 1]
             prob_pos = \
                 (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
 
