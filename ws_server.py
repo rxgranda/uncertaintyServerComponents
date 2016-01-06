@@ -63,9 +63,15 @@ class BackendServerProtocol(WebSocketServerProtocol):
         else:
             json_string = format(payload.decode('utf8'))
             json_input = json_loads( json_string )
-            in_source = json_input['source']
-            print in_source
-            #pprint( json_input )
+            if 'source' in json_input.keys():
+                in_source = json_input['source']
+            elif u'source' in json_input.keys():
+                in_source = json_input[u'source']
+            else:
+                in_source = 'kuleuven'
+#            except: 
+            #print in_source
+            print( json_input )
         try:
             #dispatcher = self.dispatchers[json_input['requestId']]
             if self.dispatchers[self.peer]['source'] != in_source:

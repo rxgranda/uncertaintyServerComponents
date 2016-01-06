@@ -83,7 +83,7 @@ class WSDispatcher():
         elif source == 'kuleuven':
             self._structures = get_structures_kuleuven()
             C_f = 3
-            C_k = 5
+            C_k = 2
             m = 2
         self.academic_clusterer = AcademicClusterer( self._structures['core_courses'],
                                                      self._structures['conval_dict'],
