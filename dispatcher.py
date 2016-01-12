@@ -83,7 +83,7 @@ class WSDispatcher():
             m = 1.25
         elif source == 'kuleuven':
             self._structures = get_structures_kuleuven()
-            C_f = 3
+            C_f = 4
             C_k = 2
             m = 2
         self.academic_clusterer = AcademicClusterer( self._structures['core_courses'],

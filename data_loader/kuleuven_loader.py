@@ -64,6 +64,7 @@ try:
     ha_df['year'] = ha_df['year'].values.astype(int32)
 except:
     pass
+ha_df = ha_df.drop_duplicates(['year','status','course','grade','student'])
 end = time()
 print('Exe time: %.2f'%(end - start))
 print('loaded dataframe from CSV as DataFrame. records: %d'%len(ha_df))

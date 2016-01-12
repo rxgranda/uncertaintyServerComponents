@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 
 from dispatcher import WSDispatcher
 from pandas import read_csv as pd_read_csv
+from pandas import merge as pd_merge
 from sklearn import datasets
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
@@ -12,6 +13,7 @@ from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.cross_validation import train_test_split
 from numpy import average as np_average
 from numpy import array as np_array
+from skfuzzy import cmeans, cmeans_predict
 
 in_source = 'kuleuven'
 dispatcher = WSDispatcher(source=in_source)
@@ -25,7 +27,7 @@ FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
             'courses_num']
 
 
-X = ss_df[FEATURES+['_class']].as_matrix()
+X = ss_df[FEATURES].as_matrix()
 y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
 #y = ss_df['_class'].values
 
@@ -115,11 +117,10 @@ plt.show()
 
 ################################################################################
 
-abs_df = pd_read_csv('../../data/kuleuven/abs_df_8763336794416746037.csv',
-                     index_col=0)
+abs_df = pd_read_csv('../../data/kuleuven/abs_df_1716653621.csv', index_col=0)
 abs_df = abs_df.fillna(-1000)
-ha_df = pd_read_csv('../../data/kuleuven/students_courses.csv',
-                    index_col=0)
+ha_df = pd_read_csv('../../data/kuleuven/students_courses.csv', index_col=0)
+ha_df = ha_df.drop_duplicates(['year','status','course','grade','student'])
 sha_df = pd_merge( ha_df, sf_df, on='student' )
 sha_df = pd_merge( sha_df, abs_df, on='course' )
 
@@ -202,9 +203,7 @@ def plot_calibration_curve_with_union_prob(est, name, fig_index):
 
     pred_ = np_array( ss_df.ix[ X_te_i ].apply( ss_predict, axis=1 ).values.tolist() )
     y_pred = pred_[:, 1]
-    prob_pos = pred_[:, 0]
-        
-        
+    prob_pos = pred_[:, 0]   
     
 
     fig = plt.figure(fig_index, figsize=(10, 10))
@@ -245,3 +244,152 @@ def plot_calibration_curve_with_union_prob(est, name, fig_index):
 plot_calibration_curve_with_union_prob(LinearSVC(), "SVC", 2)
 
 plt.show()
+
+################################################################################
+from sklearn.cluster import KMeans
+
+COURSES = abs_df['course'].values
+
+def shifting(bitlist):
+     out = 0
+     for bit in bitlist:
+         out = (out << 1) | bit
+     return out
+
+def get_courses_as_number(semester):
+    result = get_courses_as_number(semester)
+    return shifting(result)
+
+def get_courses_as_bitarray(semester):
+    result = [ int( _course in semester ) for _course in COURSES]
+    return result
+
+tmp = ss_df['taken_courses'].apply(lambda x: x.split())
+D = tmp.apply(get_courses_as_number)
+X = D.reshape( (len(D), 1) )
+km = KMeans(n_clusters=n_clusters, random_state=7)
+
+
+def plot_calibration_curve_from_data(X, y, est, name, fig_index):
+    """Plot calibration curve for est w/o and with calibration. """
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
+                                                        test_size=0.30,
+                                                        random_state=7)
+    
+    # Calibrated with isotonic calibration
+    isotonic = CalibratedClassifierCV(est, cv=2, method='isotonic')
+
+    # Calibrated with sigmoid calibration
+    sigmoid = CalibratedClassifierCV(est, cv=2, method='sigmoid')
+
+    # Logistic regression with no calibration as baseline
+    lr = LogisticRegression(C=1., solver='lbfgs')
+
+    fig = plt.figure(fig_index, figsize=(10, 10))
+    ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
+    ax2 = plt.subplot2grid((3, 1), (2, 0))
+
+    ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+    for clf, name in [(lr, 'Logistic Regression'),
+                      (est, name),
+                      (isotonic, name + ' + Isotonic'),
+                      (sigmoid, name + ' + Sigmoid')
+                      ]:
+        clf.fit(X_train, y_train)
+        # clf.fit(X_train[:,:10], X_train[:, 10])
+        y_pred = clf.predict(X_test)
+        # y_pred = clf.predict(X_test[:,:10])
+        if hasattr(clf, "predict_proba"):
+            prob_pos = clf.predict_proba(X_test)[:, 1]
+            # prob_pos = clf.predict_proba(X_test[:,:10])[:, 1]
+            # prob_pos = clf.predict_proba(X_test[:,:10])[:, 1]*weights[1]
+            # prob_pos = np_average( 1 - clf.predict_proba(X_test[:,:10]), axis=1, weights=weights )
+        else:  # use decision function
+            prob_pos = clf.decision_function(X_test)
+            # prob_pos = clf.decision_function(X_test[:,:10])[:, 1]
+            # prob_pos = clf.decision_function(X_test[:,:10])[:, 1]*weights[1]
+            # prob_pos = np_average( 1 - clf.decision_function(X_test[:,:10]), axis=1, weights=weights )
+            prob_pos = \
+                (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
+        clf_score = brier_score_loss(y_test, prob_pos, pos_label=y.max())
+        print("* %s:" % name)
+        print(" * Brier: %1.3f" % (clf_score))
+        print(" * Precision: %1.3f" % precision_score(y_test, y_pred))
+        print(" * Recall: %1.3f" % recall_score(y_test, y_pred))
+        print(" * F1: %1.3f\n" % f1_score(y_test, y_pred))
+
+        fraction_of_positives, mean_predicted_value = \
+            calibration_curve(y_test, prob_pos, n_bins=10)
+
+        ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
+                 label="%s (%1.3f)" % (name, clf_score))
+
+        ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
+                 histtype="step", lw=2)
+
+    ax1.set_ylabel("Fraction of positives")
+    ax1.set_ylim([-0.05, 1.05])
+    ax1.legend(loc="lower right")
+    ax1.set_title('Calibration plots  (reliability curve)')
+
+    ax2.set_xlabel("Mean predicted value")
+    ax2.set_ylabel("Count")
+    ax2.legend(loc="upper center", ncol=2)
+
+    plt.tight_layout()
+    fig.show()
+
+ss_df['semester_feature'] = D
+FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+            'factor4_measure', 'factor5_measure', 'factor6_measure',
+            'semester_feature']
+X = ss_df[ FEATURES ].as_matrix()
+y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+
+plot_calibration_curve_from_data(X, y, LinearSVC(), "SVC", 5)
+
+################################################################################
+
+E = tmp.apply(get_courses_as_bitarray)
+X = np.array(E.as_matrix().tolist())
+
+# for n_clusters in xrange(2, 8):
+#     sillouette_analysis(n_clusters, X)
+
+km = KMeans(n_clusters=8, random_state=7)
+_y = km.fit_predict(X)
+ss_df['semester_feature'] = _y
+FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+            'factor4_measure', 'factor5_measure', 'factor6_measure',
+            'semester_feature']
+X = ss_df[ FEATURES ].as_matrix()
+y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+
+plot_calibration_curve_from_data(X, y, LinearSVC(), "SVC", 5)
+
+KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+            'factor4_measure', 'factor5_measure', 'factor6_measure']
+
+T = ss_df.drop_duplicates('student')[ KM_FEAT_ ].as_matrix()
+T_ = ss_df[ KM_FEAT_ ].as_matrix()
+
+# for n_clusters in xrange(2, 8):
+#     sillouette_analysis(n_clusters, T)
+
+# fm = KMeans(n_clusters=4, random_state=7)
+# _y = fm.fit_predict(T_)
+
+C = 4; m = 1.25; error = 1.e-10; maxiter = 100
+                                              
+cntr, U, _, _, _, _, fpc = cmeans( T_.T,  
+                                   C,       
+                                   m,       
+                                   error,   
+                                   maxiter )
+
+
+_y = np.argmax(U, axis=0)
+ss_df['student_feature'] = _y
+
+X = ss_df[ ['semester_feature','student_feature'] ].as_matrix()

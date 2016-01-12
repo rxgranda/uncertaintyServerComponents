@@ -27,13 +27,16 @@ from pandas import DataFrame
 from skfuzzy import cmeans_predict
 from numpy import zeros as np_zeros
 from numpy import average as np_average
+from numpy import array as np_array
 from pandas import merge as pd_merge
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import recall_score
 from sklearn.cross_validation import train_test_split
-from sklearn.naive_bayes import GaussianNB
+#from sklearn.naive_bayes import GaussianNB
+from sklearn.cluster import KMeans
+from itertools import product as it_product
 
 class AcademicFailureEstimator():
     def __init__(self, academic_clusterer, **kwargs):
@@ -82,6 +85,12 @@ class AcademicFailureEstimator():
         clf = lambda data: [svc_predict( data ), svc_prob(data)]
         self._semesters_clf = clf
 
+    @staticmethod
+    def get_courses_as_bitarray(semester):
+        result = \
+            [ int( _course in semester ) for _course in AcademicFailureEstimator.COURSES ]
+        return result
+
     @property
     def classifier_fn(self):
         return self._clf
@@ -91,52 +100,97 @@ class AcademicFailureEstimator():
     def init_classifier_fn(self, **kwargs):
         FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
                     'factor4_measure', 'factor5_measure', 'factor6_measure',
-                    'alpha_total', 'beta_total', 'skewness_total', 'year_n',
-                    'courses_num']
+                    'semester_feature']
+                    # 'alpha_total', 'beta_total', 'skewness_total', 'year_n',
+                    # 'courses_num']
 
+        AcademicFailureEstimator.COURSES = self._academic_clusterer.courses_features['course'].values
+        
         se_df = self._academic_clusterer.semesters_features
         sf_df = self._academic_clusterer.students_features
         ss_df = pd_merge( se_df, sf_df, on='student' )
         ########################################################################
-        ss_df['_class'] = 0
+        # ss_df['_class'] = 0
 
-        mask_c = {}
-        mask_c[0] = ss_df['beta_total']<=-1.5
-        mask_c[1] = (ss_df['beta_total']>-1.5) & (ss_df['beta_total']<-0.862)
-        mask_c[2] = (ss_df['beta_total']>=-0.862) & (ss_df['beta_total']<0)
-        mask_c[3] = ss_df['beta_total']>=0
+        # mask_c = {}
+        # mask_c[0] = ss_df['beta_total']<=-1.5
+        # mask_c[1] = (ss_df['beta_total']>-1.5) & (ss_df['beta_total']<-0.862)
+        # mask_c[2] = (ss_df['beta_total']>=-0.862) & (ss_df['beta_total']<0)
+        # mask_c[3] = ss_df['beta_total']>=0
 
-        for i in mask_c.keys():
-            ss_df.loc[ mask_c[i], '_class' ] = i
+        # for i in mask_c.keys():
+        #     ss_df.loc[ mask_c[i], '_class' ] = i
+
+        tmp = ss_df['taken_courses'].apply(lambda x: x.split())
+        Z = tmp.apply( AcademicFailureEstimator.get_courses_as_bitarray )
+        Z = np_array( Z.as_matrix().tolist() )
+
+        self._km = KMeans(n_clusters=8, random_state=7)
+        _z = self._km.fit_predict( Z )
+        
+        ss_df['semester_feature'] = _z
+        ########################################################################
+
+        KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+                    'factor4_measure', 'factor5_measure', 'factor6_measure']
+        T = ss_df.drop_duplicates('student')[ KM_FEAT_ ].as_matrix()
+        T_ = ss_df[ KM_FEAT_ ].as_matrix()
+        
+        self._fm = KMeans(n_clusters=4, random_state=7)
+        self._fm.fit( T )
+        _z = self._fm.predict( T_ )
+        
+        ss_df['student_feature'] = _z
+
         ########################################################################
 
         
-        X = ss_df[ FEATURES ].as_matrix()
-        
-        #y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
-        y = ss_df['_class'].values
-        
+        # X = ss_df[ FEATURES ].as_matrix()
+        X = ss_df[ ['semester_feature','student_feature'] ].as_matrix()
+        y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+        # y = ss_df['_class'].values        
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=7)
+        X_train, X_test, y_train, y_test = train_test_split(X,
+                                                            y,
+                                                            test_size=0.30,
+                                                            random_state=7)
         
         if kwargs == {}:
-            logreg = LogisticRegression(C=1e5)
-            #est = GaussianNB()
+            # logreg = SVC(kernel='linear',  tol=0.0001, max_iter=1000, probability=True)
+            # logreg = LinearSVC()
+            logreg = LogisticRegression(random_state=7)
+            # logreg = LogisticRegression(C=1e5)
+            # est = GaussianNB()
         else:
             logreg = LogisticRegression(kwargs)
-            #est = GaussianNB(kwargs)
-        #isotonic = CalibratedClassifierCV(est, cv=2, method='isotonic')
+            # est = GaussianNB(kwargs)
+        # isotonic = CalibratedClassifierCV(est, cv=2, method='isotonic')
         logreg.fit(X, y)
-        #isotonic.fit(X, y)
-        #logreg_predict = logreg.predict
-        #prob_pos = isotonic.predict_proba
+        # isotonic.fit(X, y)
+        # logreg_predict = logreg.predict
+        # prob_pos = isotonic.predict_proba
         logreg_prob = logreg.predict_proba
-        #y_pred = isotonic.predict(X_test)
+        
+        ########################################################################
+        # prob_pos = logreg.decision_function(X_test)
+        # prob_min = prob_pos.min()
+        # prob_max = prob_pos.max()
+        # prob_den = prob_max - prob_min
+        ########################################################################
+
+        # logreg_prob = logreg.decision_function
+        
+        # y_pred = isotonic.predict(X_test)
         y_pred = logreg.predict(X_test)
         recall = recall_score(y_test, y_pred)
-        clf = lambda data: [logreg_prob( data ), logreg.score(X, y)]
-        #clf = lambda data: [prob_pos( data ), recall]
+        # clf = lambda data: [ logreg_prob( data ), logreg.score(X, y) ]
+        # clf = lambda data: [ (logreg_prob( data ) - prob_min)/prob_den,\
+        #                      logreg.score(X, y)]
+        clf = lambda data: [ logreg_prob( data ), recall ]
         self._clf = clf
+        
+        # data_ = [i for i in it_product(range(4),range(8))]        
+        # self._clf.ratios = logreg_prob( data_ )
     
     """
     Use of the certainty value given by Ceratainty=1-Uncertainty
@@ -158,7 +212,7 @@ class AcademicFailureEstimator():
             #U_, U0_, d_, Jm_, p_, fpc_
             U_, _, _, _, _, fpc_ = self.students_classifier_fn(student_features)
             student_membership = U_.T[0]
-            print(semester_type)
+            # print(semester_type)
             set_mask = ( self._rates['km_cluster_ID'] == semester_type[0][0] )
             possibilities = self._rates[ set_mask ]['ratio'].values
             relative_sample_size = self._rates[ set_mask ]['tamanio_relativo'].values
@@ -173,10 +227,29 @@ class AcademicFailureEstimator():
             if risk > 1:
                 risk = 1.
         elif self._academic_clusterer.source == 'kuleuven':
-            student_semester = list( semester_features ) + list( student_features[0] )
-            print student_semester
-            predict_proba, q = self.classifier_fn( student_semester )
-            risk = predict_proba[0][1]
+            ####################################################################
+            # student_semester = list( semester_features ) + list( student_features[0] )
+            semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
+
+            ####################################################################
+            
+            # student_semester = student_features.tolist()[0].append( self._km.predict( semester_features ) )
+            # student_semester = [ self._fm.predict(student_features)[0], self._km.predict( semester_features )[0]]
+            
+            # print student_semester
+            semester_type = self._km.predict( semester_features )[0]
+
+            U_, _, _, _, _, fpc_ = self.students_classifier_fn(student_features)
+            student_membership = U_.T[0]
+
+            risk = 0
+            for student_type in xrange(4):
+                predict_proba, q = self.classifier_fn( [student_type, semester_type] )
+                risk += student_membership[student_type]*predict_proba[0][1]
+            
+            # predict_proba, q = self.classifier_fn( student_semester )
+            #risk = predict_proba[0][1]
+            # risk = predict_proba[0]
             quality = q
         return risk, quality
             
@@ -207,4 +280,3 @@ class AcademicFailureEstimator():
                 
         return semester_features, student_features
         
-
