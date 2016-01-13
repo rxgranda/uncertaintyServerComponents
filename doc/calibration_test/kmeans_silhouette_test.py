@@ -97,5 +97,5 @@ def silhouette_analysis(n_clusters, X):
     plt.suptitle(("Silhouette analysis for KMeans clustering on sample data "
                   "with n_clusters = %d" % n_clusters),
                  fontsize=10, fontweight='bold')
-
-    fig.show()
+    fig.savefig('silhouette_analysis_NF/km_%i.png'%n_clusters, dpi=fig.dpi)
+    #fig.show()

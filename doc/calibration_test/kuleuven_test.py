@@ -393,3 +393,20 @@ _y = np.argmax(U, axis=0)
 ss_df['student_feature'] = _y
 
 X = ss_df[ ['semester_feature','student_feature'] ].as_matrix()
+
+################################################################################
+def get_features(row):
+    KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+                'factor4_measure', 'factor5_measure', 'factor6_measure']
+    student_features = row[KM_FEAT_].values.tolist()
+    semester_features = get_courses_as_bitarray( row['taken_courses'].split(' ') )
+    # print student_features
+    # print semester_features
+    return student_features + semester_features
+
+data = ss_df.apply(get_features, axis=1)
+data = np_array( data.tolist() )
+X = data
+y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+
+plot_calibration_curve_from_data(X, y, LinearSVC(), "SVC", 5)

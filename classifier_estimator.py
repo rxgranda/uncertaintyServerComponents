@@ -91,6 +91,15 @@ class AcademicFailureEstimator():
             [ int( _course in semester ) for _course in AcademicFailureEstimator.COURSES ]
         return result
 
+    @staticmethod
+    def get_ss_features(row):
+        KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+                    'factor4_measure', 'factor5_measure', 'factor6_measure']
+        student_features = row[KM_FEAT_].values.tolist()
+        semester = row['taken_courses'].split(' ')
+        semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
+        return student_features + semester_features
+
     @property
     def classifier_fn(self):
         return self._clf
@@ -98,6 +107,31 @@ class AcademicFailureEstimator():
     """
     """
     def init_classifier_fn(self, **kwargs):
+        AcademicFailureEstimator.COURSES = self._academic_clusterer.courses_features['course'].values
+        
+        se_df = self._academic_clusterer.semesters_features
+        sf_df = self._academic_clusterer.students_features
+        ss_df = pd_merge( se_df, sf_df, on='student' )
+        
+        data = ss_df.apply( AcademicFailureEstimator.get_ss_features, axis=1 )
+        data = np_array( data.tolist() )
+        X = data
+        y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+        X_train, X_test, y_train, y_test = train_test_split(X,
+                                                            y,
+                                                            test_size=0.30,
+                                                            random_state=7)
+
+        logreg = LogisticRegression(random_state=7)
+        logreg.fit(X, y)
+        logreg_prob = logreg.predict_proba
+
+        y_pred = logreg.predict(X_test)
+        recall = recall_score(y_test, y_pred)
+        
+        clf = lambda data: [ logreg_prob( data ), recall ]
+        self._clf = clf
+        """
         FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
                     'factor4_measure', 'factor5_measure', 'factor6_measure',
                     'semester_feature']
@@ -191,6 +225,7 @@ class AcademicFailureEstimator():
         
         # data_ = [i for i in it_product(range(4),range(8))]        
         # self._clf.ratios = logreg_prob( data_ )
+        """
     
     """
     Use of the certainty value given by Ceratainty=1-Uncertainty
@@ -227,6 +262,13 @@ class AcademicFailureEstimator():
             if risk > 1:
                 risk = 1.
         elif self._academic_clusterer.source == 'kuleuven':
+            _semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
+            student_semester = student_features[0].tolist() + _semester_features
+
+            predict_proba, q = self.classifier_fn( student_semester )
+            risk = predict_proba[0][1]
+            quality = q
+            """
             ####################################################################
             # student_semester = list( semester_features ) + list( student_features[0] )
             semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
@@ -248,9 +290,10 @@ class AcademicFailureEstimator():
                 risk += student_membership[student_type]*predict_proba[0][1]
             
             # predict_proba, q = self.classifier_fn( student_semester )
-            #risk = predict_proba[0][1]
+            # risk = predict_proba[0][1]
             # risk = predict_proba[0]
             quality = q
+            """
         return risk, quality
             
     def get_features(self, student_ID, semester):        
