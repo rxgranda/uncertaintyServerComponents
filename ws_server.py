@@ -33,6 +33,8 @@ from sys import stdout
 from twisted.python import log
 from twisted.internet import reactor
 from gc import collect as gc_collect
+from pprint import pprint
+
 
 DEBUG = True
 PORT = 8000
@@ -57,7 +59,8 @@ class BackendServerProtocol(WebSocketServerProtocol):
         print("WebSocket connection open.")
 
     def onMessage(self, payload, isBinary):
-        #dispatcher = WSDispatcher()
+        # dispatcher = WSDispatcher()
+        # pprint("Send message")
         if isBinary:
             print("Binary message received: %d bytes"%( len( payload ) ))
         else:
@@ -70,8 +73,8 @@ class BackendServerProtocol(WebSocketServerProtocol):
             else:
                 in_source = 'kuleuven'
 #            except: 
-            #print in_source
-            #print( json_input )
+            # print in_source
+            # pprint( json_input )
         try:
             #dispatcher = self.dispatchers[json_input['requestId']]
             if self.dispatchers[self.peer]['source'] != in_source:
@@ -86,7 +89,9 @@ class BackendServerProtocol(WebSocketServerProtocol):
 
         # echo back message verbatim
         #self.sendMessage( self.dispatcher.risk( json_input ), False )
-        self.sendMessage( dispatcher.risk( json_input ), False )
+        risk = dispatcher.risk( json_input )
+        pprint( "Risk %s"%risk )
+        self.sendMessage( risk, False )
         
     def onClose(self, wasClean, code, reason):
         try:

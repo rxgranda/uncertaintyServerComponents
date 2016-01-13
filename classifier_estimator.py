@@ -266,7 +266,7 @@ class AcademicFailureEstimator():
             student_semester = student_features[0].tolist() + _semester_features
 
             predict_proba, q = self.classifier_fn( student_semester )
-            risk = predict_proba[0][1]
+            risk = predict_proba[0][0]
             quality = q
             """
             ####################################################################
