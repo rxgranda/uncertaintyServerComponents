@@ -90,15 +90,34 @@ class AcademicFailureEstimator():
         result = \
             [ int( _course in semester ) for _course in AcademicFailureEstimator.COURSES ]
         return result
+    
+    # @staticmethod
+    def get_semester_f(self, semester):
+        abs_df = self._academic_clusterer.courses_features
+        return abs_df[ abs_df['course'].isin(semester) ]['alpha'].sum()
 
-    @staticmethod
-    def get_ss_features(row):
+    # @staticmethod
+    def get_ss_features(self, row):
+        semester = row['taken_courses'].split(' ')
+        student_features = [row['GPA']]
+        semester_features = [self.get_semester_f(semester)]
+        return student_features + semester_features
+
+        """KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+                'factor4_measure', 'factor5_measure', 'factor6_measure']
+        student_features = row[KM_FEAT_].values.tolist()
+        semester = row['taken_courses'].split(' ')
+        semester_features = [self.get_semester_f(semester)]#get_courses_as_bitarray( row['taken_courses'].split(' ') )
+        # print student_features
+        # print semester_features
+        return student_features + semester_features"""
+        """
         KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
                     'factor4_measure', 'factor5_measure', 'factor6_measure']
         student_features = row[KM_FEAT_].values.tolist()
         semester = row['taken_courses'].split(' ')
         semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
-        return student_features + semester_features
+        return student_features + semester_features"""
 
     @property
     def classifier_fn(self):
@@ -111,9 +130,11 @@ class AcademicFailureEstimator():
         
         se_df = self._academic_clusterer.semesters_features
         sf_df = self._academic_clusterer.students_features
+        gpa_df = self._academic_clusterer.ha_df.drop_duplicates(['student','GPA'])
         ss_df = pd_merge( se_df, sf_df, on='student' )
+        ss_df = pd_merge( ss_df, gpa_df, on='student' )
         
-        data = ss_df.apply( AcademicFailureEstimator.get_ss_features, axis=1 )
+        data = ss_df.apply( self.get_ss_features, axis=1 )
         data = np_array( data.tolist() )
         X = data
         y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
@@ -262,8 +283,12 @@ class AcademicFailureEstimator():
             if risk > 1:
                 risk = 1.
         elif self._academic_clusterer.source == 'kuleuven':
-            _semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
-            student_semester = student_features[0].tolist() + _semester_features
+            # _semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
+            gpa_df = self._academic_clusterer.ha_df.drop_duplicates(['student','GPA'])
+            _semester_features = [ self.get_semester_f( semester ) ]
+            _student_features = [ gpa_df[ gpa_df['student']==student_ID ]['GPA'] ]
+            # student_semester = student_features[0].tolist() + _semester_features
+            student_semester = _student_features + _semester_features
 
             predict_proba, q = self.classifier_fn( student_semester )
             risk = predict_proba[0][0]
