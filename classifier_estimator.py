@@ -26,16 +26,20 @@
 from pandas import DataFrame
 from skfuzzy import cmeans_predict
 from numpy import zeros as np_zeros
+from numpy import ones as np_ones
+from numpy import unique as np_unique
 from numpy import average as np_average
 from numpy import array as np_array
+from numpy import append as np_append
 from pandas import merge as pd_merge
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.svm import SVC#, LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import recall_score
 from sklearn.cross_validation import train_test_split
-#from sklearn.naive_bayes import GaussianNB
-from sklearn.cluster import KMeans
+# from sklearn.naive_bayes import GaussianNB
+# from sklearn.cluster import KMeans
 from itertools import product as it_product
 
 class AcademicFailureEstimator():
@@ -94,16 +98,21 @@ class AcademicFailureEstimator():
     # @staticmethod
     def get_semester_f(self, semester):
         abs_df = self._academic_clusterer.courses_features
-        return abs_df[ abs_df['course'].isin(semester) ]['alpha'].sum()
+        alpha_total = abs_df[ abs_df['course'].isin(semester) ]['alpha'].sum()
+        # credit_total = abs_df[ abs_df['course'].isin(semester) ]['credits'].sum()
+        return [alpha_total]
+        # return [credit_total]
+        # return [alpha_total, credit_total]
 
     # @staticmethod
     def get_ss_features(self, row):
         semester = row['taken_courses'].split(' ')
+        # student_features = [row['GPA'],row['performance_y']]
         student_features = [row['GPA']]
-        semester_features = [self.get_semester_f(semester)]
+        semester_features = self.get_semester_f(semester)
         return student_features + semester_features
 
-        """KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+        """KM_FEAT_ = 'factor1_measure', 'factor2_measure', 'factor3_measure',
                 'factor4_measure', 'factor5_measure', 'factor6_measure']
         student_features = row[KM_FEAT_].values.tolist()
         semester = row['taken_courses'].split(' ')
@@ -126,24 +135,36 @@ class AcademicFailureEstimator():
     """
     """
     def init_classifier_fn(self, **kwargs):
-        AcademicFailureEstimator.COURSES = self._academic_clusterer.courses_features['course'].values
+        cs_df = self._academic_clusterer.courses_features
+        AcademicFailureEstimator.COURSES = cs_df['course'].values
         
         se_df = self._academic_clusterer.semesters_features
         sf_df = self._academic_clusterer.students_features
         gpa_df = self._academic_clusterer.ha_df.drop_duplicates(['student','GPA'])
         ss_df = pd_merge( se_df, sf_df, on='student' )
         ss_df = pd_merge( ss_df, gpa_df, on='student' )
+        ss_df = pd_merge( ss_df, cs_df, on='course' )
         
         data = ss_df.apply( self.get_ss_features, axis=1 )
         data = np_array( data.tolist() )
         X = data
         y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
+
+        # H = np_unique( X[:,0] )
+        # H = np_array( [ H, np_zeros( len(H) ) ] ).T
+        # l = np_ones( len( H ) )
+        # X = np_append( X, H, axis=0)
+        # y = np_append( y, l )
+
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
                                                             test_size=0.30,
                                                             random_state=7)
 
-        logreg = LogisticRegression(random_state=7)
+        # logreg = LogisticRegression(random_state=7)
+        logreg = AdaBoostClassifier(random_state=10)
+        logreg = CalibratedClassifierCV( logreg, cv=2, method='sigmoid')
+        # logreg = GaussianNB()
         logreg.fit(X, y)
         logreg_prob = logreg.predict_proba
 
@@ -285,8 +306,10 @@ class AcademicFailureEstimator():
         elif self._academic_clusterer.source == 'kuleuven':
             # _semester_features = AcademicFailureEstimator.get_courses_as_bitarray( semester )
             gpa_df = self._academic_clusterer.ha_df.drop_duplicates(['student','GPA'])
-            _semester_features = [ self.get_semester_f( semester ) ]
-            _student_features = [ gpa_df[ gpa_df['student']==student_ID ]['GPA'] ]
+            _semester_features = self.get_semester_f( semester )
+            tmp = gpa_df[ gpa_df['student']==student_ID ]
+            # _student_features = [ tmp['GPA'],tmp['performance_y'] ]
+            _student_features = [ tmp['GPA'] ]
             # student_semester = student_features[0].tolist() + _semester_features
             student_semester = _student_features + _semester_features
 
