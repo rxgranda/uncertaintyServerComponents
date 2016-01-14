@@ -410,3 +410,26 @@ X = data
 y = ss_df['ha_reprobado'].apply(lambda x: 0 if x else 1).values
 
 plot_calibration_curve_from_data(X, y, LinearSVC(), "SVC", 5)
+
+gpa_df = pd_read_csv('../../data/kuleuven/gpa_df.csv', index_col=0)
+ss_df = pd_merge( ss_df, gpa_df, on='student' )
+
+def get_semester_f(semester):
+    return abs_df[ abs_df['course'].isin(semester) ]['alpha'].sum()
+
+def get_features(row):
+    KM_FEAT_ = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+                'factor4_measure', 'factor5_measure', 'factor6_measure']
+    student_features = row[KM_FEAT_].values.tolist()
+    semester = row['taken_courses'].split(' ')
+    semester_features = [get_semester_f(semester)]#get_courses_as_bitarray( row['taken_courses'].split(' ') )
+    # print student_features
+    # print semester_features
+    return student_features + semester_features
+
+def get_features(row):
+    semester = row['taken_courses'].split(' ')
+    student_features = [row['GPA'], row['performance']]
+    # student_features = [row['GPA']]
+    semester_features = [get_semester_f(semester)]
+    return student_features + semester_features

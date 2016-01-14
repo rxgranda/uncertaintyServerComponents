@@ -247,8 +247,12 @@ def courses_features_calc(ha_df, population_IDs=[]):
     
     ha_gb = sample_df.groupby('course')
     abs_df = ha_gb.apply( course_features_record )
+    cs_df = kuleuven_loader.cs_df
+    cs_df['course'] = cs_df['code'].values
+    # cs_df.info()
     try: abs_df = DataFrame.from_records( abs_df.tolist() )
     except: pass
+    abs_df = pd_merge( abs_df, cs_df[['course','credits']], on='course' )
     return abs_df
 
 """
