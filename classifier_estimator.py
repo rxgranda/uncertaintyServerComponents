@@ -30,7 +30,12 @@ from numpy import ones as np_ones
 from numpy import unique as np_unique
 from numpy import average as np_average
 from numpy import array as np_array
+from numpy import max as np_max
+from numpy import min as np_min
+from numpy import mean as np_mean
+from numpy import log as np_log
 from numpy import append as np_append
+from numpy.linalg import norm as np_linalg_norm
 from pandas import merge as pd_merge
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
@@ -167,14 +172,30 @@ class AcademicFailureEstimator():
         # logreg = GaussianNB()
         logreg.fit(X, y)
         logreg_prob = logreg.predict_proba
+        logreg_predict = logreg.predict
 
         y_pred = logreg.predict(X_test)
         recall = recall_score(y_test, y_pred)
+
+        def quality(data):
+            _z_ = logreg_predict(data)[0]
+            sample = X[ y==_z_ ]
+            sample_ = X[ y==(1-_z_) ]
+            d = np_linalg_norm( [data] - sample )
+            d_ = np_linalg_norm( [data] - sample_ )
+            r = np_max( d_ )/np_max( d )
+            # r = np_mean( d )/np_mean( d_ )
+            # r = np_min( d )/np_min( d_ )
+            # r = 0.5 * ( r + recall )
+            if r > 1:
+                r = abs( 1-r )
+            r = 0.5 * ( r + recall )
+            return str( r )
         
-        clf = lambda data: [ logreg_prob( data ), recall ]
+        clf = lambda data: [ logreg_prob( data ), quality(data) ]
         self._clf = clf
         """
-        FEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
+        FrEATURES = ['factor1_measure', 'factor2_measure', 'factor3_measure',
                     'factor4_measure', 'factor5_measure', 'factor6_measure',
                     'semester_feature']
                     # 'alpha_total', 'beta_total', 'skewness_total', 'year_n',
@@ -370,4 +391,3 @@ class AcademicFailureEstimator():
             student_features = cs_df[ self._academic_clusterer.STUDENTS_F_LABELS ].values
                 
         return semester_features, student_features
-        
